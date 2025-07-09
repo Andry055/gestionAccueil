@@ -1,5 +1,5 @@
 
-const { Pool } = require("pg");
+import { Pool } from "pg";
 
 const pool = new Pool({
   user: "postgres",          // ⚠️ ton utilisateur pgAdmin
@@ -9,4 +9,4 @@ const pool = new Pool({
   port: 5432,
 });
 
-module.exports = pool;
+export default pool;
