@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from "react-router-dom";
 import Navbar from "./navbar";
-import {UserIcon, ChartBarIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
+import { UserIcon, ChartBarIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 
 function Home() {
   return (
@@ -17,20 +17,46 @@ function Home() {
           </p>
         </section>
 
-        {/* Compteurs + Graphique */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Bloc principal : Liens à gauche, Compteurs au centre, Graphique à droite */}
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start pb-10">
+          {/* Liens vers autres pages (à gauche) */}
+          <div className="grid grid-cols-1 gap-6 px-7 border-l-5 border-gray-800">
+            <Link to="/visiteur" className="hover:scale-105 transition-transform">
+              <div className="bg-blue-200 rounded-xl shadow-xl p-2 flex flex-col items-center justify-center text-center h-full">
+                <UserIcon className="h-10 w-10 text-black mb-2" />
+                <p className="text-xl font-medium text-gray-800">Nouveau visiteur</p>
+              </div>
+            </Link>
+
+            <Link to="/service" className="hover:scale-105 transition-transform">
+              <div className="bg-blue-200 rounded-xl shadow-xl p-2 flex flex-col items-center justify-center text-center h-full">
+                <Cog6ToothIcon className="h-10 w-10 text-black mb-2" />
+                <p className="text-xl font-medium text-gray-800">Voir les services</p>
+              </div>
+            </Link>
+
+            <Link to="/stats" className="hover:scale-105 transition-transform">
+              <div className="bg-blue-200 rounded-xl shadow-xl p-2 flex flex-col items-center justify-center text-center h-full">
+                <ChartBarIcon className="h-10 w-10 text-black mb-2" />
+                <p className="text-xl font-medium text-gray-800">Statistiques détaillées</p>
+              </div>
+            </Link>
+          </div>
+
+          {/* Compteurs (au centre) */}
           <div className="bg-white rounded-xl shadow-xl p-6 space-y-6">
             <h2 className="text-2xl font-semibold text-gray-800 text-center">Aujourd'hui</h2>
             <div className="bg-blue-100 rounded-lg p-4 shadow-md text-center">
               <p className="text-gray-600">Nombre de Visiteurs</p>
               <p className="text-4xl font-bold text-blue-800">34</p>
             </div>
-            <div className="bg-green-100 rounded-lg p-4 shadow-md text-center">
+            <div className="bg-blue-100 rounded-lg p-4 shadow-md text-center">
               <p className="text-gray-600">Services visités</p>
               <p className="text-4xl font-bold text-green-800">9</p>
             </div>
           </div>
 
+          {/* Graphique (à droite) */}
           <div className="bg-white rounded-xl shadow-xl p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4">Visites sur la semaine</h2>
             <div className="grid grid-cols-7 items-end gap-4 h-48 px-2">
@@ -53,33 +79,6 @@ function Home() {
               ))}
             </div>
           </div>
-        </section>
-
-        {/* Liens vers autres pages */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Visiteur */}
-          <Link to="/visiteur" className="hover:scale-105 transition-transform">
-            <div className="bg-white rounded-xl shadow-xl p-6 flex flex-col items-center justify-center h-full text-center">
-            <UserIcon className="h-10 w-10 text-black mb-2" />
-              <p className="text-xl font-medium text-gray-800">Nouveau visiteur</p>
-            </div>
-          </Link>
-
-          {/* Service */}
-          <Link to="/service" className="hover:scale-105 transition-transform">
-            <div className="bg-white rounded-xl shadow-xl p-6 flex flex-col items-center justify-center h-full text-center">
-            <Cog6ToothIcon className="h-10 w-10 text-black mb-2" />
-              <p className="text-xl font-medium text-gray-800">Voir les services</p>
-            </div>
-          </Link>
-
-          {/* 📊 Nouveau lien : statistiques */}
-          <Link to="/stats" className="hover:scale-105 transition-transform">
-            <div className="bg-white rounded-xl shadow-xl p-6 flex flex-col items-center justify-center h-full text-center">
-            <ChartBarIcon className="h-10 w-10 text-black mb-2" />
-              <p className="text-xl font-medium text-gray-800">Statistiques détaillées</p>
-            </div>
-          </Link>
         </section>
       </main>
     </div>
