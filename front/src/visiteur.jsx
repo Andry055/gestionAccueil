@@ -7,6 +7,7 @@ const utilisateurs = [
   { id: 1, nom: "Andry", prenom: "Nirina", cin: "2010245124536" },
   { id: 2, nom: "Mialy", prenom: "Lionnel", cin: "20105114250" },
   { id: 3, nom: "Feno", prenom: "Grey", cin: "102410231546" },
+  { id: 3, nom: "Feno", prenom: "Grey", cin: "102410231546" },
 ];
 
 export default function Visiteur() {
@@ -32,6 +33,9 @@ export default function Visiteur() {
     { id: 1, date: "2025-07-10", heureArr: "8:55", heureSor: "10:55", service: "DRFP", motif: "Réunion", chefService: "Mr TOVONIAINA Hasa" },
     { id: 2, date: "2025-07-12", heureArr: "9:00", heureSor: "10:50", service: "DTFP", motif: "Dépôt de dossier", chefService: "Mme RAMANATSOA Lala" },
     { id: 3, date: "2025-07-15", heureArr: "10:20", heureSor: "11:55", service: "DRFP", motif: "Entretien", chefService: "Mr LAZANIRINA Manana" },
+    { id: 4, date: "2025-07-15", heureArr: "10:20", heureSor: "11:55", service: "DRFP", motif: "Entretien", chefService: "Mr LAZANIRINA Manana" },
+    { id: 5, date: "2025-07-15", heureArr: "10:20", heureSor: "11:55", service: "DRFP", motif: "Entretien", chefService: "Mr LAZANIRINA Manana" },
+    { id: 6, date: "2025-07-15", heureArr: "10:20", heureSor: "11:55", service: "DRFP", motif: "Entretien", chefService: "Mr LAZANIRINA Manana" },
   ];
 
   const togglePopup = () => setOpen(!open);
@@ -70,11 +74,11 @@ export default function Visiteur() {
       <Navbar />
       <h1 className="text-4xl font-extrabold text-gray-800 mb-7 ml-2 md:ml-6">Visiteurs</h1>
 
-      <div className="flex flex-col md:flex-row gap-8 max-w-7xl mx-auto pb-10">
+      <div className="flex flex-col md:flex-row gap-8 max-w-7xl px-6 mx-auto pb-10">
 
         {/* Filtres */}
-        <section className="bg-blue-200 rounded-xl shadow-lg p-6 md:p-8 w-full md:w-1/4">
-          <h2 className="text-2xl font-semibold text-gray-700 mb-6 text-center">Filtres</h2>
+        <section className="bg-blue-200 rounded-xl shadow-lg md:p-8 w-full md:w-1/4">
+          <h2 className="text-2xl font-semibold text-gray-700 text-center">Filtres</h2>
 
           <div className="flex flex-col space-y-2">
             {["id", "nom", "prenom", "cin"].map((field) => (
@@ -86,22 +90,15 @@ export default function Visiteur() {
                   value={searchValues[field]}
                   onChange={handleChange}
                   placeholder={field}
-                  className="mt-1 p-3 rounded-md border border-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="mt-1 p-1 rounded-md border border-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </label>
             ))}
-
-            <button
-              onClick={handleReset}
-              className="mt-4 bg-red-400 text-white py-2 rounded hover:bg-red-500"
-            >
-              Réinitialiser
-            </button>
           </div>
         </section>
 
         {/* Tableau + Statistique */}
-        <section className="bg-white rounded-xl shadow-lg p-6 md:p-8 flex-1 overflow-y-auto max-h-[80vh]">
+        <section className="bg-white rounded-xl border-blue-300 border-4 shadow-lg p-6 md:p-8 flex-1 overflow-y-auto max-h-[80vh]">
           <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
 
             <h2 className="text-2xl font-semibold text-gray-700">Liste des visiteurs</h2>

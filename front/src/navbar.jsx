@@ -13,8 +13,8 @@ export default function Navbar() {
     <nav className="fixed top-0 left-0 w-full bg-blue-300 text-gray-900 shadow-md z-50">
       <div className="flex items-center justify-between px-4 py-3 md:px-8">
         {/* Logo */}
-        <div className="flex items-center">
-          <img src="/logo.png" alt="logo" className="h-10 w-auto" />
+        <div className="flex items-center ">
+          <img src="/logo-mtefop.png" alt="logo" className="h-15 w-auto" />
         </div>
 
         {/* Bouton menu hamburger (mobile) */}
@@ -29,8 +29,7 @@ export default function Navbar() {
           <li><Link to="/home" className="p-2 hover:text-blue-950 hover:border-b-4">Accueil</Link></li>
           <li><Link to="/visiteur" className="p-2 hover:text-blue-950 hover:border-b-4">Visiteur</Link></li>
           <li><Link to="/service" className="p-2 hover:text-blue-950 hover:border-b-4">Service</Link></li>
-          <li><Link to="/ajoutvisiteur" className="p-2 hover:text-blue-950 hover:border-b-4">Ajout</Link></li>
-          <li><Link to="/ajoutvisiteur" className="p-2 hover:text-blue-950 hover:border-b-4">Dashboard</Link></li>
+          <li><Link to="/ajoutvisiteur" className="p-2 hover:text-blue-950 hover:border-b-4">Statistiques</Link></li>
           <li><Link to="/about" className="p-2 hover:text-blue-950 hover:border-b-4">À propos</Link></li>
         </ul>
         <div className="flex rounded-lg bg-gray-800 p-5  justify-between">

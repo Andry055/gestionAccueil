@@ -44,7 +44,7 @@ function Home() {
           </div>
 
           {/* Compteurs (au centre) */}
-          <div className="bg-white rounded-xl shadow-xl p-6 space-y-6">
+          <div className="bg-white border-blue-300 border-4 rounded-xl shadow-xl p-6 space-y-6">
             <h2 className="text-2xl font-semibold text-gray-800 text-center">Aujourd'hui</h2>
             <div className="bg-blue-100 rounded-lg p-4 shadow-md text-center">
               <p className="text-gray-600">Nombre de Visiteurs</p>
@@ -57,7 +57,7 @@ function Home() {
           </div>
 
           {/* Graphique (à droite) */}
-          <div className="bg-white rounded-xl shadow-xl p-6">
+          <div className="bg-white border-blue-300 border-4 rounded-xl shadow-xl p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4">Visites sur la semaine</h2>
             <div className="grid grid-cols-7 items-end gap-4 h-48 px-2">
               {[
