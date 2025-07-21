@@ -6,6 +6,7 @@ import AjoutVisiteur from "./ajoutvisiteur";
 import Login from "./login";
 import Navbar from "./navbar";
 import Service from "./service";
+import Statistique from "./static";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/home" element={<Home />} />
         <Route path="/visiteur" element={<Visiteur />} />
         <Route path="/ajoutvisiteur" element={<AjoutVisiteur />} />
+        <Route path="/statistique" element={<Statistique />} />
         <Route path="/service" element={<Service />} />
       </Routes>
     </Router>

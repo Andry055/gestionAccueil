@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 
-export default function AjoutVisiteur({open, onClose }) {
+export default function AjoutService({ open, onClose }) {
   const [formData, setFormData] = useState({
     nom: "",
-    prenom: "",
-    cin: "",
+    porte: "",
+    etage: "",
   });
 
   const handleChange = (e) => {
@@ -16,60 +16,61 @@ export default function AjoutVisiteur({open, onClose }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Données envoyées :", formData);
-    // Tu peux ici envoyer les données vers un backend ou API
+    console.log("Service ajouté :", formData);
+    // Ici tu peux envoyer les données vers une API ou les stocker dans un state global
 
     // Réinitialiser le formulaire
-    setFormData({ nom: "", prenom: "", cin: "" });
+    setFormData({ nom: "", porte: "", etage: "" });
 
-    // Fermer la pop-up si nécessaire
+    // Fermer la modale
     onClose();
   };
+
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white p-8 rounded-xl shadow-lg w-96">
-        <h2 className="text-2xl font-bold mb-6 text-center">Ajouter Visiteur</h2>
+        <h2 className="text-xl font-bold mb-6 text-center text-indigo-700">Ajouter un Service</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Nom :</label>
+            <label className="block text-sm font-medium mb-1">Nom du Service :</label>
             <input
               type="text"
               name="nom"
               value={formData.nom}
               onChange={handleChange}
-              className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
               required
+              className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Prénom :</label>
+            <label className="block text-sm font-medium mb-1">Porte :</label>
             <input
-              type="text"
-              name="prenom"
-              value={formData.prenom}
+              type="number"
+              name="porte"
+              value={formData.porte}
               onChange={handleChange}
-              className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
               required
+              className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">CIN :</label>
+            <label className="block text-sm font-medium mb-1">Étage :</label>
             <input
               type="text"
-              name="cin"
-              value={formData.cin}
+              name="etage"
+              value={formData.etage}
               onChange={handleChange}
-              className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
               required
+              className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
 
-          <div className="flex justify-end space-x-2 mt-4">
+          <div className="flex justify-end space-x-2">
             <button
               type="button"
               onClick={onClose}
@@ -79,7 +80,7 @@ export default function AjoutVisiteur({open, onClose }) {
             </button>
             <button
               type="submit"
-              className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+              className="bg-indigo-500 text-white px-4 py-2 rounded-md hover:bg-indigo-600"
             >
               Ajouter
             </button>

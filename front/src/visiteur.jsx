@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Navbar from "./navbar";
 import VisiteListPopup from "./listeVisite";
 import { NotebookText, Edit2, UserPlus2 } from "lucide-react";
+import AjoutVisiteur from "./ajoutvisiteur";
 
 const utilisateurs = [
   { id: 1, nom: "Andry", prenom: "Nirina", cin: "2010245124536" },
@@ -27,6 +28,7 @@ export default function Visiteur() {
 
   const [filteredUtilisateurs, setFilteredUtilisateurs] = useState(utilisateurs);
   const [openVisite, setOpenVisite] = useState(false);
+  const [openAjout, setOpenAjout]=useState(false);
   const [open, setOpen] = useState(false);
 
   const visites = [
@@ -115,7 +117,7 @@ export default function Visiteur() {
                 <p className="text-2xl font-bold text-gray-900">2</p>
               </div>
 
-              <button onClick={togglePopup}>
+              <button onClick={()=>setOpenAjout(true)}>
                 <div className="flex shadow-xl justify-center items-center bg-green-600 rounded-2xl w-32 h-12 hover:scale-105 transition-transform p-2">
                   <b><p className="text-white pr-2">Ajout</p></b>
                   <UserPlus2 className="w-8 text-white" />
@@ -173,7 +175,7 @@ export default function Visiteur() {
               )}
             </tbody>
           </table>
-
+          <AjoutVisiteur open={openAjout} onClose={()=>setOpenAjout(false)}/>
           <VisiteListPopup open={openVisite} onClose={() => setOpenVisite(false)} visites={visites} />
         </section>
       </div>

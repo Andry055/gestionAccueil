@@ -52,7 +52,7 @@ function Home() {
             </div>
             <div className="bg-blue-100 rounded-lg p-4 shadow-md text-center">
               <p className="text-gray-600">Services visités</p>
-              <p className="text-4xl font-bold text-green-800">9</p>
+              <p className="text-4xl font-bold text-blue-800">9</p>
             </div>
           </div>
 
