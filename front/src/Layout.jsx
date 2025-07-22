@@ -5,15 +5,15 @@ import Navbar from "./navbar";
 export default function Layout({ children }) {
   const location = useLocation();
 
-  // Liste des routes où la navbar ne s'affiche pas
-  const hideNavbarRoutes = ["/"];
+  // Routes où on ne veut pas afficher la navbar (login et registre)
+  const hideNavbarRoutes = ["/", "/register"];
 
   const shouldHideNavbar = hideNavbarRoutes.includes(location.pathname);
 
   return (
-    <div>
+    <div className="min-h-screen flex flex-col">
       {!shouldHideNavbar && <Navbar />}
-      <div>{children}</div>
+      <main className="flex-grow">{children}</main>
     </div>
   );
 }
