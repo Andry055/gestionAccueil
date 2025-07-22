@@ -1,26 +1,30 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import React from "react";
-import Home from "./home";
-import Visiteur from "./visiteur";
-import AjoutVisiteur from "./ajoutvisiteur";
-import Login from "./login";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./navbar";
-import Service from "./service";
+import { DarkModeProvider } from "./DarkModeContext";
+import Home from "./home";
+import Layout from "./Layout";
+import Visiteur from "./Visiteur";
+import Service from "./Service";
 import Statistique from "./static";
+import Login from "./Login";
+import AjoutVisiteur from "./AjoutVisiteur";
 
-function App() {
+export default function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/visiteur" element={<Visiteur />} />
-        <Route path="/ajoutvisiteur" element={<AjoutVisiteur />} />
-        <Route path="/statistique" element={<Statistique />} />
-        <Route path="/service" element={<Service />} />
-      </Routes>
-    </Router>
+    <DarkModeProvider>
+      <Router>
+        <Layout>
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/home" element={<Home />} />
+          <Route path="/visiteur" element={<Visiteur />} />
+          <Route path="/ajoutvisiteur" element={<AjoutVisiteur />} />
+          <Route path="/service" element={<Service />} />
+          <Route path="/statistique" element={<Statistique />} />
+        </Routes>
+        </Layout>
+      </Router>
+    </DarkModeProvider>
   );
 }
-
-export default App;

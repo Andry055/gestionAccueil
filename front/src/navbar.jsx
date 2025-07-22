@@ -1,163 +1,133 @@
 import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { Menu, X, LogOut } from "lucide-react";
+import { useDarkMode } from "./DarkModeContext";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const { darkMode, toggleDarkMode } = useDarkMode();
 
-  const toggleMenu = () => setOpen(!open);
+  const navBg = darkMode ? "bg-gray-900 text-white" : "bg-blue-300 text-gray-900";
+  const linkActive = darkMode
+    ? "p-2 text-amber-300 border-b-4 border-amber-300"
+    : "p-2 text-blue-950 border-b-4 border-blue-950";
+  const linkInactive = darkMode
+    ? "p-2 hover:text-amber-300 hover:border-b-4 hover:border-amber-300"
+    : "p-2 hover:text-blue-950 hover:border-b-4 hover:border-blue-950";
+
+  const links = [
+    { path: "/home", label: "Accueil" },
+    { path: "/visiteur", label: "Visiteur" },
+    { path: "/service", label: "Service" },
+    { path: "/statistique", label: "Statistiques" },
+    { path: "/about", label: "À propos" },
+  ];
 
   return (
-    <nav className="fixed top-0 left-0 w-full bg-blue-300 text-gray-900 shadow-md z-50">
+    <nav className={`fixed top-0 left-0 w-full shadow-md z-50 ${navBg} transition-all duration-300`}>
       <div className="flex items-center justify-between px-4 py-3 md:px-8">
-        {/* Logo */}
+        {/* Logo + titre */}
         <div className="flex items-center">
-          <img src="/logo-mtefop.png" alt="logo" className="h-15 w-auto" />
-          <p className="text-2xl pl-2 text-gray-800" ><i>Gestion des Visiteurs</i></p>
+          <img src="/logo-mtefop.png" alt="logo" className="h-10 w-auto" />
+          <p className={`pl-2 italic text-2xl ${darkMode ? "text-gray-100" : "text-gray-800"}`}>
+            Gestion des Visiteurs
+          </p>
         </div>
 
-        {/* Bouton menu hamburger (mobile) */}
-        <div className="pl-40 md:hidden">
-          <button onClick={toggleMenu}>
+        {/* Bouton menu mobile */}
+        <div className="md:hidden">
+          <button onClick={() => setOpen(!open)} aria-label="Toggle Menu">
             {open ? <X size={28} /> : <Menu size={28} />}
           </button>
         </div>
 
         {/* Menu desktop */}
-        <ul className="hidden md:flex space-x-6 text-xl">
-          <li>
-            <NavLink
-              to="/home"
-              end
-              className={({ isActive }) =>
-                isActive
-                  ? "p-2 text-blue-950 border-b-4 border-blue-950"
-                  : "p-2 hover:text-blue-950 hover:border-b-4"
-              }
-            >
-              Accueil
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/visiteur"
-              className={({ isActive }) =>
-                isActive
-                  ? "p-2 text-blue-950 border-b-4 border-blue-950"
-                  : "p-2 hover:text-blue-950 hover:border-b-4"
-              }
-            >
-              Visiteur
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/service"
-              className={({ isActive }) =>
-                isActive
-                  ? "p-2 text-blue-950 border-b-4 border-blue-950"
-                  : "p-2 hover:text-blue-950 hover:border-b-4"
-              }
-            >
-              Service
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/statistique"
-              className={({ isActive }) =>
-                isActive
-                  ? "p-2 text-blue-950 border-b-4 border-blue-950"
-                  : "p-2 hover:text-blue-950 hover:border-b-4"
-              }
-            >
-              Statistiques
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/about"
-              className={({ isActive }) =>
-                isActive
-                  ? "p-2 text-blue-950 border-b-4 border-blue-950"
-                  : "p-2 hover:text-blue-950 hover:border-b-4"
-              }
-            >
-              À propos
-            </NavLink>
-          </li>
-        </ul>
+        <ul className="hidden md:flex space-x-6 text-xl items-center">
+          {links.map(({ path, label }) => (
+            <li key={path}>
+              <NavLink
+                to={path}
+                className={({ isActive }) => (isActive ? linkActive : linkInactive)}
+              >
+                {label}
+              </NavLink>
+            </li>
+          ))}
 
-        {/* User info */}
-        <div className="flex rounded-lg bg-gray-800 p-5 justify-between">
-          <p className="text-gray-100 px-4">Andry</p>
-          <div className="px-2 rounded-4xl hover:bg-amber-500 bg-gray-100">
-            <LogOut className="w-5 text-gray-900" />
+          {/* Bouton mode sombre/clair */}
+          <button
+            onClick={toggleDarkMode}
+            className={`ml-4 px-3 py-1 rounded-md text-sm transition-all ${
+              darkMode
+                ? "bg-gray-700 hover:bg-gray-600 text-white"
+                : "bg-gray-200 hover:bg-gray-300 text-gray-900"
+            }`}
+          >
+            {darkMode ? "☀️ Clair" : "🌙 Sombre"}
+          </button>
+
+          {/* Profil + déconnexion */}
+          <div
+            className={`flex items-center ml-4 rounded-lg p-2 ${
+              darkMode ? "bg-gray-700" : "bg-gray-800"
+            }`}
+          >
+            <p className="text-gray-100 px-3">Andry</p>
+            <button className="p-1 rounded hover:bg-amber-500 transition-colors">
+              <LogOut className="w-5 text-white" />
+            </button>
+          </div>
+        </ul>
+      </div>
+
+      {/* Menu mobile déroulant */}
+      <div
+        className={`md:hidden flex flex-col px-4 pt-2 pb-4 space-y-3 text-lg overflow-hidden transition-all duration-300 ${
+          open ? "max-h-[500px]" : "max-h-0"
+        } ${darkMode ? "bg-gray-900 text-white" : "bg-blue-300 text-gray-900"}`}
+      >
+        {links.map(({ path, label }) => (
+          <NavLink
+            key={path}
+            to={path}
+            onClick={() => setOpen(false)}
+            className={({ isActive }) =>
+              isActive
+                ? `font-bold ${darkMode ? "text-amber-300" : "text-blue-950"}`
+                : darkMode
+                ? "text-white hover:text-amber-300"
+                : "text-gray-900 hover:text-blue-950"
+            }
+          >
+            {label}
+          </NavLink>
+        ))}
+
+        {/* Profil et darkmode en mobile */}
+        <div className="pt-4 border-t border-gray-500 flex flex-col space-y-3">
+          <button
+            onClick={toggleDarkMode}
+            className={`px-3 py-2 rounded-md text-sm transition-all ${
+              darkMode
+                ? "bg-gray-700 hover:bg-gray-600 text-white"
+                : "bg-gray-200 hover:bg-gray-300 text-gray-900"
+            }`}
+          >
+            {darkMode ? "☀️ Mode clair" : "🌙 Mode sombre"}
+          </button>
+
+          <div
+            className={`flex items-center justify-between px-3 py-2 rounded-lg ${
+              darkMode ? "bg-gray-700" : "bg-gray-800"
+            }`}
+          >
+            <p className="text-gray-100">Andry</p>
+            <button className="p-1 rounded hover:bg-amber-500 transition-colors">
+              <LogOut className="w-5 text-white" />
+            </button>
           </div>
         </div>
       </div>
-
-      {/* Menu mobile */}
-      {open && (
-        <ul className="md:hidden flex flex-col px-4 pb-4 space-y-3 text-lg bg-blue-300">
-          <li>
-            <NavLink
-              to="/home"
-              end
-              onClick={toggleMenu}
-              className={({ isActive }) =>
-                isActive ? "text-blue-950 font-bold" : ""
-              }
-            >
-              Accueil
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/visiteur"
-              onClick={toggleMenu}
-              className={({ isActive }) =>
-                isActive ? "text-blue-950 font-bold" : ""
-              }
-            >
-              Visiteur
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/service"
-              onClick={toggleMenu}
-              className={({ isActive }) =>
-                isActive ? "text-blue-950 font-bold" : ""
-              }
-            >
-              Service
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/ajoutvisiteur"
-              onClick={toggleMenu}
-              className={({ isActive }) =>
-                isActive ? "text-blue-950 font-bold" : ""
-              }
-            >
-              Dashboard
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/about"
-              onClick={toggleMenu}
-              className={({ isActive }) =>
-                isActive ? "text-blue-950 font-bold" : ""
-              }
-            >
-              À propos
-            </NavLink>
-          </li>
-        </ul>
-      )}
     </nav>
   );
 }

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useDarkMode } from "./DarkModeContext";
 
 export default function AjoutService({ open, onClose }) {
   const [formData, setFormData] = useState({
@@ -6,6 +7,8 @@ export default function AjoutService({ open, onClose }) {
     porte: "",
     etage: "",
   });
+
+  const { darkMode } = useDarkMode();
 
   const handleChange = (e) => {
     setFormData({
@@ -19,10 +22,7 @@ export default function AjoutService({ open, onClose }) {
     console.log("Service ajouté :", formData);
     // Ici tu peux envoyer les données vers une API ou les stocker dans un state global
 
-    // Réinitialiser le formulaire
     setFormData({ nom: "", porte: "", etage: "" });
-
-    // Fermer la modale
     onClose();
   };
 
@@ -30,8 +30,13 @@ export default function AjoutService({ open, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white p-8 rounded-xl shadow-lg w-96">
-        <h2 className="text-xl font-bold mb-6 text-center text-indigo-700">Ajouter un Service</h2>
+      <div className={`p-8 rounded-xl shadow-lg w-96 transition-all duration-300
+        ${darkMode ? "bg-gray-800 text-gray-100" : "bg-white text-gray-900"}`}>
+
+        <h2 className={`text-xl font-bold mb-6 text-center 
+          ${darkMode ? "text-amber-400" : "text-indigo-700"}`}>
+          Ajouter un Service
+        </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -42,7 +47,9 @@ export default function AjoutService({ open, onClose }) {
               value={formData.nom}
               onChange={handleChange}
               required
-              className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className={`w-full p-2 border rounded-md focus:outline-none focus:ring-2 
+                ${darkMode ? "bg-gray-700 border-gray-600 text-white focus:ring-amber-400" 
+                           : "bg-white border-gray-300 text-gray-900 focus:ring-indigo-400"}`}
             />
           </div>
 
@@ -54,7 +61,9 @@ export default function AjoutService({ open, onClose }) {
               value={formData.porte}
               onChange={handleChange}
               required
-              className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className={`w-full p-2 border rounded-md focus:outline-none focus:ring-2 
+                ${darkMode ? "bg-gray-700 border-gray-600 text-white focus:ring-amber-400" 
+                           : "bg-white border-gray-300 text-gray-900 focus:ring-indigo-400"}`}
             />
           </div>
 
@@ -66,7 +75,9 @@ export default function AjoutService({ open, onClose }) {
               value={formData.etage}
               onChange={handleChange}
               required
-              className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className={`w-full p-2 border rounded-md focus:outline-none focus:ring-2 
+                ${darkMode ? "bg-gray-700 border-gray-600 text-white focus:ring-amber-400" 
+                           : "bg-white border-gray-300 text-gray-900 focus:ring-indigo-400"}`}
             />
           </div>
 
@@ -74,13 +85,18 @@ export default function AjoutService({ open, onClose }) {
             <button
               type="button"
               onClick={onClose}
-              className="bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400"
+              className={`px-4 py-2 rounded-md transition-all 
+                ${darkMode ? "bg-gray-600 hover:bg-gray-500 text-white" 
+                           : "bg-gray-300 hover:bg-gray-400 text-gray-800"}`}
             >
               Annuler
             </button>
+
             <button
               type="submit"
-              className="bg-indigo-500 text-white px-4 py-2 rounded-md hover:bg-indigo-600"
+              className={`px-4 py-2 rounded-md transition-all 
+                ${darkMode ? "bg-amber-500 hover:bg-amber-600 text-white" 
+                           : "bg-indigo-500 hover:bg-indigo-600 text-white"}`}
             >
               Ajouter
             </button>

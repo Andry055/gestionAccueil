@@ -1,16 +1,20 @@
 import React, { useState } from "react";
 import Navbar from "./navbar";
 import { Eye, Edit2 } from "lucide-react";
-import { Search, UserPlus2 } from "lucide-react";
+import { UserPlus2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import AjoutService from "./ajoutService";
+import { useDarkMode } from "./DarkModeContext"; // Import contexte darkMode
 
 export default function Service() {
 
-  const [openAjout, setOpenAjout]=useState(false);
+  const { darkMode } = useDarkMode(); // Récupérer l'état sombre/clair
+
+  const [openAjout, setOpenAjout] = useState(false);
+  
   const services = [
-    { id: 1, nom: "avancement", porte: 6, etage: "2", visites: 120 },
-    { id: 2, nom: "reclassement", porte: 201, etage: "2", visites: 90 },
+    { id: 1, nom: "Avancement", porte: 6, etage: "2", visites: 120 },
+    { id: 2, nom: "Reclassement", porte: 201, etage: "2", visites: 90 },
     { id: 3, nom: "Bonification", porte: 100, etage: "1", visites: 150 },
     { id: 4, nom: "Integration", porte: 50, etage: "3", visites: 80 },
     { id: 5, nom: "Nomination", porte: 75, etage: "3", visites: 60 },
@@ -21,36 +25,42 @@ export default function Service() {
     { id: 10, nom: "DCR", porte: 45, etage: "6", visites: 70 },
   ];
 
-  const topServices = [...services]
-    .sort((a, b) => b.visites - a.visites)
-    .slice(0, 10);
+  const topServices = [...services].sort((a, b) => b.visites - a.visites).slice(0, 10);
 
-  // 🔍 Recherche
   const [search, setSearch] = useState("");
 
   const filteredServices = services.filter((service) =>
     service.nom.toLowerCase().includes(search.toLowerCase())
   );
 
+  // Styles conditionnels
+  const bgMain = darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900";
+  const cardBg = darkMode ? "bg-gray-800 text-gray-100 border-gray-600" : "bg-white border-blue-300";
+  const chartCardBg = darkMode ? "bg-gray-800 text-gray-100 border-green-600" : "bg-white border-green-300";
+  const tableHead = darkMode ? "bg-gray-700 text-gray-200" : "bg-indigo-100 text-indigo-700";
+  const tableRowHover = darkMode ? "hover:bg-gray-700" : "hover:bg-indigo-50";
+  const inputBg = darkMode ? "bg-gray-700 text-white border-gray-500" : "bg-white text-black border-gray-300";
+
   return (
-    <div className="min-h-screen bg-gray-100 pt-24 px-4 md:px-10">
+    <div className={`min-h-screen pt-24 px-4 md:px-10 transition-all duration-300 ${bgMain}`}>
       <Navbar />
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Tableau des services */}
-        <section className="bg-white rounded-xl border-blue-300 border-4 shadow-lg flex-1 overflow-hidden max-h-[80vh] relative">
-          <div className="sticky top-0 bg-white z-20 px-6 pt-4 pb-5 md:px-8 md:pt-6 md:pb-3 border-b border-blue-200">
-            <h2 className="text-2xl font-semibold text-indigo-700">Liste des Services</h2>
 
-            {/* Champ de recherche */}
-            <div className="flex mt-4">
+        {/* Tableau des services */}
+        <section className={`rounded-xl shadow-lg flex-1 overflow-hidden max-h-[80vh] border-4 ${cardBg}`}>
+          <div className={`sticky top-0 z-20 px-6 pt-4 pb-5 md:px-8 md:pt-6 md:pb-3 border-b ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-blue-200"}`}>
+            <h2 className="text-2xl font-semibold">Liste des Services</h2>
+
+            {/* Recherche */}
+            <div className="flex mt-4 gap-4">
               <input
                 type="text"
                 placeholder="Rechercher un service..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full p-1 mr-30 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                className={`w-full p-2 rounded-md border-2 border-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-400 ${inputBg}`}
               />
-              <button onClick={()=>setOpenAjout(true)}>
+              <button onClick={() => setOpenAjout(true)}>
                 <div className="flex shadow-xl justify-center items-center bg-green-600 rounded-2xl w-32 h-12 hover:scale-105 transition-transform p-2">
                   <b><p className="text-white pr-2">Ajout</p></b>
                   <UserPlus2 className="w-8 text-white" />
@@ -60,35 +70,33 @@ export default function Service() {
           </div>
 
           <div className="overflow-y-auto h-[calc(80vh-130px)]">
-            <table className="m-0 w-full min-w-[600px] border-collapse table-auto text-gray-700">
-              <thead className=" bg-indigo-100 top-0 z-0">
+            <table className="w-full min-w-[600px] border-collapse table-auto">
+              <thead className={tableHead}>
                 <tr>
-                  {["ID", "Service", "Porte", "Etage", "Voir detaille", "Modifier"].map((heading) => (
-                    <th
-                      key={heading}
-                      className="sticky top-0 bg-blue-100 z-10 px-6 py-5 border-b border-gray-300 text-left font-medium text-indigo-700 whitespace-nowrap"
-                    >
+                  {["ID", "Service", "Porte", "Étage", "Détail", "Modifier"].map((heading) => (
+                    <th key={heading} className="sticky top-0 px-6 py-5 border-b text-left font-medium whitespace-nowrap">
                       {heading}
                     </th>
                   ))}
                 </tr>
               </thead>
+
               <tbody>
                 {filteredServices.length > 0 ? (
                   filteredServices.map((service) => (
-                    <tr key={service.id} className="hover:bg-indigo-50">
-                      <td className="px-6 py-4 border-b whitespace-nowrap bg-blue-50">{service.id}</td>
+                    <tr key={service.id} className={`${tableRowHover} transition-colors cursor-pointer`}>
+                      <td className="px-6 py-4 border-b whitespace-nowrap">{service.id}</td>
                       <td className="px-6 py-4 border-b whitespace-nowrap">{service.nom}</td>
                       <td className="px-6 py-4 border-b whitespace-nowrap">{service.porte}</td>
                       <td className="px-6 py-4 border-b whitespace-nowrap">{service.etage}</td>
                       <td className="px-6 py-4 border-b whitespace-nowrap">
-                        <button className="flex items-center text-blue-500 hover:text-blue-700 transition">
+                        <button className="flex items-center text-blue-400 hover:text-blue-600 transition">
                           <Eye size={18} className="mr-1" />
                           Voir
                         </button>
                       </td>
                       <td className="px-6 py-4 border-b whitespace-nowrap">
-                        <button className="flex items-center text-green-500 hover:text-green-700 transition">
+                        <button className="flex items-center text-green-400 hover:text-green-600 transition">
                           <Edit2 size={18} className="mr-1" />
                           Modifier
                         </button>
@@ -97,7 +105,7 @@ export default function Service() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="text-center py-6 text-gray-500">
+                    <td colSpan="6" className="text-center py-6 text-gray-400">
                       Aucun service trouvé.
                     </td>
                   </tr>
@@ -107,9 +115,9 @@ export default function Service() {
           </div>
         </section>
 
-        {/* Graphique des services les plus visités */}
-        <section className="bg-white rounded-xl border-green-300 border-4 shadow-lg p-6 md:p-8 w-full lg:w-1/3 h-[400px]">
-          <h2 className="text-xl font-semibold text-green-700 mb-4">Top 10 des Services les plus visités</h2>
+        {/* Graphique */}
+        <section className={`rounded-xl shadow-lg p-6 md:p-8 w-full lg:w-1/3 h-[400px] border-4 ${chartCardBg}`}>
+          <h2 className="text-xl font-semibold mb-4">Top 10 des Services les plus visités</h2>
 
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
@@ -117,15 +125,17 @@ export default function Service() {
               layout="vertical"
               margin={{ top: 10, right: 10, left: 10, bottom: 10 }}
             >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis type="number" />
-              <YAxis dataKey="nom" type="category" />
-              <Tooltip />
-              <Bar dataKey="visites" fill="#4CAF50" />
+              <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#555" : "#ccc"} />
+              <XAxis type="number" stroke={darkMode ? "#ccc" : "#333"} />
+              <YAxis dataKey="nom" type="category" stroke={darkMode ? "#ccc" : "#333"} />
+              <Tooltip contentStyle={{ background: darkMode ? "#333" : "#fff", color: darkMode ? "#fff" : "#000" }} />
+              <Bar dataKey="visites" fill={darkMode ? "#FBBF24" : "#4CAF50"} />
             </BarChart>
           </ResponsiveContainer>
-          <AjoutService open={openAjout} onClose={() => setOpenAjout(false)}/>
+
+          <AjoutService open={openAjout} onClose={() => setOpenAjout(false)} />
         </section>
+
       </div>
     </div>
   );
