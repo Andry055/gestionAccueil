@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from "react-router-dom";
 import { UserIcon, ChartBarIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import { useDarkMode } from "./DarkModeContext";
-import AjoutVisiteur from "./AjoutVisiteur";
+import AjoutVisiteur from "./ajoutvisiteur";
 
 export default function Home() {
   const { darkMode } = useDarkMode();

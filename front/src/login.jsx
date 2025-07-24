@@ -29,6 +29,8 @@ export default function Login() {
       setShowModal(true);
 
       login(data.name, data.role, data.token);
+      // après un login réussi
+
 
       setTimeout(() => {
         setShowModal(false);
@@ -36,6 +38,7 @@ export default function Login() {
         else if (data.role === "superadmin") navigate("/superAdmin_dahsboard");
         else navigate("/");
       }, 2000);
+      localStorage.setItem("userRole", data.role); // par ex. "admin" ou "superadmin"
     } else {
       setShowModal(false);
       setError(data.message || "Erreur de connexion");

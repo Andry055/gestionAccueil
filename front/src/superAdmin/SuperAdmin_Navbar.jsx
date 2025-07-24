@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Menu, X, LogOut } from "lucide-react";
-import { useDarkMode } from "./DarkModeContext";
-import { useAuth } from "./AuthContext";
+import { useDarkMode } from "../DarkModeContext";
+import { useAuth } from "../AuthContext";
 
-export default function Navbar() {
+export default function SuperNavbar() {
   const [open, setOpen] = useState(false);
   const { darkMode, toggleDarkMode } = useDarkMode();
   const { user, logout } = useAuth();
@@ -24,9 +24,11 @@ export default function Navbar() {
     : "p-2 hover:text-blue-950 hover:border-b-4 hover:border-blue-950";
 
   const links = [
-    { path: "/home", label: "Accueil" },
+    { path: "/superAdmin_dahsboard", label: "Accueil" },
+    { path: "/utilisateur", label: "Utilisateur" },
     { path: "/visiteur", label: "Visiteur" },
     { path: "/service", label: "Service" },
+    { path: "/superAdmin_stastistique", label: "Statistiques" },
     { path: "/about", label: "À propos" },
   ];
 
@@ -49,7 +51,7 @@ export default function Navbar() {
         </div>
 
         {/* Menu desktop */}
-        <ul className="hidden md:flex space-x-6 text-xl items-center">
+        <ul className="hidden md:flex space-x-6 text-l items-center">
           {links.map(({ path, label }) => (
             <li key={path}>
               <NavLink

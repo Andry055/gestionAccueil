@@ -1,19 +1,24 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import Navbar from "./navbar";
+import Navbar from "./Navbar";
+import SuperNavbar from "./superAdmin/SuperAdmin_Navbar";
 
 export default function Layout({ children }) {
   const location = useLocation();
+  const [role, setRole] = useState(null);
 
-  // Routes où on ne veut pas afficher la navbar (login et registre)
-  const hideNavbarRoutes = ["/", "/register"];
+  useEffect(() => {
+    const storedRole = localStorage.getItem("userRole");
+    setRole(storedRole);
+  }, [location.pathname]);
 
-  const shouldHideNavbar = hideNavbarRoutes.includes(location.pathname);
+  const hideNavbarRoutes = ["/"];
+  const showNavbar = !hideNavbarRoutes.includes(location.pathname);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {!shouldHideNavbar && <Navbar />}
-      <main className="flex-grow">{children}</main>
-    </div>
+    <>
+      {showNavbar && (role === "superadmin" ? <SuperNavbar /> : <Navbar />)}
+      {children}
+    </>
   );
 }

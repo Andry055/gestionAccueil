@@ -12,6 +12,7 @@ import Login from "./login";
 import Register from "./Registre";
 import AjoutVisiteur from "./ajoutvisiteur";
 import SuperAdminDashboard from "./superAdmin/SuperAdmin_dahsboard";
+import StatistiquesSuperAdmin from "./superAdmin/SuperAdmin_Statistique";
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/home" element={<Home />} />
               <Route path="/superAdmin_dahsboard" element={<SuperAdminDashboard />} />
+              <Route path="/superAdmin_stastistique" element={<StatistiquesSuperAdmin />} />
               <Route path="/visiteur" element={<Visiteur />} />
               <Route path="/ajoutvisiteur" element={<AjoutVisiteur />} />
               <Route path="/service" element={<Service />} />

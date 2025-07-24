@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import Navbar from "./navbar";
 import { Eye, Edit2 } from "lucide-react";
 import { UserPlus2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
@@ -43,7 +42,6 @@ export default function Service() {
 
   return (
     <div className={`min-h-screen pt-24 px-4 md:px-10 transition-all duration-300 ${bgMain}`}>
-      <Navbar />
       <div className="flex flex-col lg:flex-row gap-8">
 
         {/* Tableau des services */}
