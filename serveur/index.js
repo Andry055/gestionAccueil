@@ -1,6 +1,10 @@
 import express from 'express';
 import cors from 'cors';
+import  dotenv  from 'dotenv';
 import authRoutes from './routes/authRoutes.js'; // ✅ Vérifie que ce chemin est correct
+import { register } from './controllers/registerController.js';
+
+dotenv.config();
 
 const app = express();
 const PORT = 5000;
@@ -16,6 +20,7 @@ app.get('/', (req, res) => {
 
 // Route API de login
 app.use('/api/auth', authRoutes);
+app.use('/register', register);
 
 // Lancement du serveur
 app.listen(PORT, () => {

@@ -1,7 +1,9 @@
+// login.jsx
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
-import { CheckCircle } from "lucide-react"; // Import Lucide ici
+import { CheckCircle } from "lucide-react";
+import { useAuth } from "./AuthContext";
 
 export default function Login() {
   const [name, setName] = useState("");
@@ -9,6 +11,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,9 +28,13 @@ export default function Login() {
       setError("");
       setShowModal(true);
 
+      login(data.name, data.role, data.token);
+
       setTimeout(() => {
         setShowModal(false);
-        navigate("/home");
+        if (data.role === "admin") navigate("/home");
+        else if (data.role === "superadmin") navigate("/superAdmin_dahsboard");
+        else navigate("/");
       }, 2000);
     } else {
       setShowModal(false);
@@ -37,8 +44,6 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-800 via-gray-500 to-blue-300 flex items-center justify-center p-4 relative">
-
-      {/* Modal animé avec overlay sombre dégradé */}
       <AnimatePresence>
         {showModal && (
           <motion.div
@@ -71,19 +76,13 @@ export default function Login() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
       >
-        <img
-          src="/logo.png"
-          alt="Logo"
-          className="w-24 h-24 mb-4 rounded-full shadow-md"
-        />
+        <img src="/logo.png" alt="Logo" className="w-24 h-24 mb-4 rounded-full shadow-md" />
         <h1 className="text-3xl font-bold text-gray-800 mb-1">Gestion Visiteur</h1>
         <p className="text-gray-600 mb-6 text-center">Connectez-vous à votre espace</p>
 
         <form onSubmit={handleSubmit} className="w-full space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nom
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
             <input
               type="text"
               value={name}
@@ -95,9 +94,7 @@ export default function Login() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Mot de passe
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
             <input
               type="password"
               value={password}
