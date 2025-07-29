@@ -3,7 +3,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { CheckCircle } from "lucide-react";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "../AuthContext";
 
 export default function Login() {
   const [name, setName] = useState("");

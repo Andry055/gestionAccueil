@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useDarkMode } from "./DarkModeContext";
+import { useDarkMode } from "../utils/DarkModeContext";
 
 export default function AjoutVisiteur({ open, onClose }) {
   const { darkMode } = useDarkMode();

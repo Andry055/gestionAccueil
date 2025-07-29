@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Menu, X, LogOut } from "lucide-react";
 import { useDarkMode } from "./DarkModeContext";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "../AuthContext";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);

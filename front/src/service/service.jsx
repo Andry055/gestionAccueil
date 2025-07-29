@@ -3,7 +3,7 @@ import { Eye, Edit2 } from "lucide-react";
 import { UserPlus2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import AjoutService from "./ajoutService";
-import { useDarkMode } from "./DarkModeContext"; // Import contexte darkMode
+import { useDarkMode } from "../utils/DarkModeContext"; // Import contexte darkMode
 
 export default function Service() {
 

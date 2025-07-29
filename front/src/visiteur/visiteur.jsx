@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
-import Navbar from "./navbar";
 import VisiteListPopup from "./listeVisite";
 import { NotebookText, Edit2, UserPlus2 } from "lucide-react";
-import AjoutVisiteur from "./AjoutVisiteur";
-import { useDarkMode } from "./DarkModeContext";
+import AjoutVisiteur from "./ajoutvisiteur";
+import { useDarkMode } from "../utils/DarkModeContext";
 
 const utilisateursInitiaux = [
   { id: 1, nom: "Andry", prenom: "Nirina", cin: "2010245124536", dateAjout: "2025-07-20" },
@@ -28,7 +27,6 @@ export default function Visiteur() {
     { id: 3, date: "2025-07-15", heureArr: "10:20", heureSor: "11:55", service: "DRFP", motif: "Entretien", chefService: "Mr LAZANIRINA Manana" },
   ];
 
-  // Recherche avec debounce
   useEffect(() => {
     const timer = setTimeout(() => setFilters(searchValues), 500);
     return () => clearTimeout(timer);
@@ -53,21 +51,34 @@ export default function Visiteur() {
     setFilters({ id: "", nom: "", prenom: "", cin: "" });
   };
 
-  // Compteur "Nouveau"
+  // Fonction ajout visiteur (obligatoire)
+  const handleAjoutVisiteur = (newVisiteur) => {
+    const newId = utilisateurs.length > 0 ? utilisateurs[utilisateurs.length - 1].id + 1 : 1;
+    const newUser = { ...newVisiteur, id: newId, dateAjout: today };
+    setUtilisateurs([...utilisateurs, newUser]);
+    setOpenAjout(false);
+  };
+
   const nouveauxVisiteurs = utilisateurs.filter(u => u.dateAjout === today).length;
 
-  // Style
   const bgMain = darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900";
   const cardBg = darkMode ? "bg-gray-800 text-gray-100 border-gray-600" : "bg-blue-200 text-gray-700";
   const tableHead = darkMode ? "bg-gray-700 text-gray-200" : "bg-indigo-100 text-indigo-700";
   const tableRowHover = darkMode ? "hover:bg-gray-700" : "hover:bg-indigo-50";
 
-  // Ajout visiteur
-  const handleAjoutVisiteur = (newVisiteur) => {
-    const newId = utilisateurs.length + 1;
-    const newUser = { ...newVisiteur, id: newId, dateAjout: today };
-    setUtilisateurs([...utilisateurs, newUser]);
-    setOpenAjout(false);
+  const buttonBaseClasses = `
+    relative inline-flex items-center justify-center px-5 py-2 border rounded-full font-semibold
+    transition duration-300 ease-in-out cursor-pointer select-none
+    focus:outline-none focus:ring-4 focus:ring-indigo-300
+  `;
+
+  const buttonVariants = {
+    primary: darkMode
+      ? "border-indigo-500 text-indigo-400 hover:text-white hover:bg-indigo-600 focus:ring-indigo-500"
+      : "border-indigo-600 text-indigo-700 hover:text-white hover:bg-indigo-600 focus:ring-indigo-300",
+    neutral: darkMode
+      ? "border-gray-500 text-gray-400 hover:text-white hover:bg-gray-600 focus:ring-gray-500"
+      : "border-gray-400 text-gray-700 hover:text-white hover:bg-gray-600 focus:ring-gray-300",
   };
 
   return (
@@ -78,9 +89,9 @@ export default function Visiteur() {
 
         {/* Filtres */}
         <section className={`rounded-xl shadow-lg md:p-8 w-full md:w-1/4 border-4 border-blue-200 ${cardBg}`}>
-          <h2 className="text-2xl font-semibold text-center">Filtres</h2>
+          <h2 className="text-2xl font-semibold text-center mb-6">Filtres</h2>
 
-          <div className="flex flex-col space-y-2 mt-4">
+          <div className="flex flex-col space-y-4">
             {["id", "nom", "prenom", "cin"].map((field) => (
               <label key={field} className="flex flex-col font-medium capitalize">
                 {field}
@@ -89,16 +100,16 @@ export default function Visiteur() {
                   name={field}
                   value={searchValues[field]}
                   onChange={handleChange}
-                  placeholder={field}
-                  className={`mt-1 p-1 rounded-md border focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                    darkMode ? "bg-gray-700 border-gray-500 text-white" : "bg-white border-gray-800 text-black"
-                  }`}
+                  placeholder={`Rechercher par ${field}`}
+                  className={`mt-2 p-2 rounded-md border focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm
+                    ${darkMode ? "bg-gray-700 border-gray-600 text-gray-100" : "bg-white border-gray-300 text-gray-900"}`}
                 />
               </label>
             ))}
             <button
               onClick={handleReset}
-              className="mt-4 px-4 py-2 rounded-md bg-red-500 hover:bg-red-600 text-white"
+              className={`${buttonBaseClasses} ${buttonVariants.neutral} mt-4 w-full text-center`}
+              aria-label="Réinitialiser les filtres"
             >
               Réinitialiser
             </button>
@@ -106,27 +117,47 @@ export default function Visiteur() {
         </section>
 
         {/* Tableau + Statistiques */}
-        <section className={`rounded-xl shadow-lg p-6 md:p-8 flex-1 overflow-y-auto max-h-[80vh] border-4 ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-blue-300"}`}>
+        <section
+          className={`rounded-xl shadow-lg p-6 md:p-8 flex-1 overflow-y-auto max-h-[80vh] border-4
+            ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-blue-300"}`}
+        >
           <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
             <h2 className="text-2xl font-semibold">Liste des visiteurs</h2>
 
             <div className="flex flex-wrap items-center gap-4">
 
-              <div className={`rounded-xl p-3 flex items-center justify-center min-w-[120px] ${cardBg}`}>
-                <p className="font-medium px-1">Total :</p>
+              {/* Statistiques */}
+              <div className={`rounded-xl p-3 flex items-center justify-center min-w-[120px] ${cardBg} shadow-md`}>
+                <p className="font-medium px-2">Total :</p>
                 <p className="text-2xl font-bold">{filteredUtilisateurs.length}</p>
               </div>
 
-              <div className={`rounded-xl p-3 flex items-center justify-center min-w-[120px] ${cardBg}`}>
-                <p className="font-medium px-1">Nouveau :</p>
+              <div className={`rounded-xl p-3 flex items-center justify-center min-w-[120px] ${cardBg} shadow-md`}>
+                <p className="font-medium px-2">Nouveau :</p>
                 <p className="text-2xl font-bold">{nouveauxVisiteurs}</p>
               </div>
 
-              <button onClick={() => setOpenAjout(true)}>
-                <div className="flex shadow-xl justify-center items-center bg-green-600 rounded-2xl w-32 h-12 hover:scale-105 transition-transform p-2">
-                  <b><p className="text-white pr-2">Ajout</p></b>
-                  <UserPlus2 className="w-8 text-white" />
-                </div>
+              {/* Bouton Voir tous */}
+              <button
+                onClick={() => {
+                  setFilters({ id: "", nom: "", prenom: "", cin: "" });
+                  setSearchValues({ id: "", nom: "", prenom: "", cin: "" });
+                }}
+                className={`${buttonBaseClasses} ${buttonVariants.neutral} shadow-sm`}
+                aria-label="Voir tous les visiteurs"
+              >
+                Voir tous
+                <span className="ml-2 text-xl font-bold">→</span>
+              </button>
+
+              {/* Bouton Ajout */}
+              <button
+                onClick={() => setOpenAjout(true)}
+                className={`${buttonBaseClasses} ${buttonVariants.primary} shadow-lg`}
+                aria-label="Ajouter un visiteur"
+              >
+                <UserPlus2 className="w-5 h-5 mr-2" />
+                Ajout
               </button>
 
             </div>
@@ -164,16 +195,33 @@ export default function Visiteur() {
                     <td className="px-6 py-4 border-b whitespace-nowrap">{user.prenom}</td>
                     <td className="px-6 py-4 border-b whitespace-nowrap">{user.cin}</td>
                     <td className="px-6 py-1 border-b whitespace-nowrap">
-                      <button onClick={() => setOpenVisite(true)}>
-                        <div className="grid place-items-center bg-orange-400 rounded-2xl w-12 h-12">
-                          <NotebookText className="w-8 text-white" />
-                        </div>
+                      <button
+                        onClick={() => setOpenVisite(true)}
+                        className={`inline-flex items-center justify-center px-3 py-1 rounded-full
+                          border transition duration-300
+                          ${
+                            darkMode
+                              ? "border-yellow-400 text-yellow-300 hover:bg-yellow-400 hover:text-gray-900"
+                              : "border-yellow-600 text-yellow-700 hover:bg-yellow-600 hover:text-white"
+                          }`}
+                        aria-label={`Voir visite de ${user.prenom} ${user.nom}`}
+                      >
+                        <NotebookText className="w-5 h-5" />
                       </button>
                     </td>
                     <td className="px-6 py-1 border-b whitespace-nowrap">
-                      <div className="grid place-items-center bg-blue-600 rounded-2xl w-12 h-12">
-                        <Edit2 className="w-8 text-white" />
-                      </div>
+                      <button
+                        className={`inline-flex items-center justify-center px-3 py-1 rounded-full
+                          border transition duration-300
+                          ${
+                            darkMode
+                              ? "border-blue-400 text-blue-300 hover:bg-blue-400 hover:text-gray-900"
+                              : "border-blue-600 text-blue-700 hover:bg-blue-600 hover:text-white"
+                          }`}
+                        aria-label={`Modifier ${user.prenom} ${user.nom}`}
+                      >
+                        <Edit2 className="w-5 h-5" />
+                      </button>
                     </td>
                   </tr>
                 ))

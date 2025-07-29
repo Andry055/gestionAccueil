@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
 import { UserIcon, ChartBarIcon, UsersIcon, ShieldCheckIcon, CalendarDaysIcon, BuildingOffice2Icon } from '@heroicons/react/24/outline';
-import { useDarkMode } from "../DarkModeContext";
-import AjoutVisiteur from "../ajoutvisiteur";
+import { useDarkMode } from "../utils/DarkModeContext";
+import AjoutVisiteur from "../visiteur/ajoutvisiteur";
 
 export default function SuperAdminDashboard() {
   const { darkMode } = useDarkMode();
@@ -48,6 +48,7 @@ export default function SuperAdminDashboard() {
             <p className={`${textSecondary} text-sm`}>Visites Aujourd’hui</p>
           </div>
         </section>
+        
 
         <AjoutVisiteur open={openAjout} onClose={() => setOpenAjout(false)} />
       </main>

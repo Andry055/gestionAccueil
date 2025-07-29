@@ -1,16 +1,16 @@
 // App.jsx
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { DarkModeProvider } from "./DarkModeContext";
+import { DarkModeProvider } from "./utils/DarkModeContext";
 import { AuthProvider } from "./AuthContext";
-import Home from "./home";
-import Layout from "./Layout";
-import Visiteur from "./Visiteur";
-import Service from "./Service";
-import Statistique from "./static";
-import Login from "./login";
-import Register from "./Registre";
-import AjoutVisiteur from "./ajoutvisiteur";
+import Home from "./home/home";
+import Layout from "./utils/Layout";
+import Visiteur from "./visiteur/visiteur";
+import Visite from "./visiteur/visite";
+import Service from "./service/service";
+import Login from "./utils/login";
+import Register from "./utils/Registre";
+import AjoutVisiteur from "./visiteur/ajoutvisiteur";
 import SuperAdminDashboard from "./superAdmin/SuperAdmin_dahsboard";
 import StatistiquesSuperAdmin from "./superAdmin/SuperAdmin_Statistique";
 
@@ -29,7 +29,7 @@ export default function App() {
               <Route path="/visiteur" element={<Visiteur />} />
               <Route path="/ajoutvisiteur" element={<AjoutVisiteur />} />
               <Route path="/service" element={<Service />} />
-              <Route path="/statistique" element={<Statistique />} />
+              <Route path="/visite" element={<Visite />} />
             </Routes>
           </Layout>
         </Router>

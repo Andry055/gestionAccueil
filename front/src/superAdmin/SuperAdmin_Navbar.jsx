@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Menu, X, LogOut } from "lucide-react";
-import { useDarkMode } from "../DarkModeContext";
+import { useDarkMode } from "../utils/DarkModeContext";
 import { useAuth } from "../AuthContext";
 
 export default function SuperNavbar() {
