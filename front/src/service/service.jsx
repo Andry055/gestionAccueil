@@ -1,14 +1,10 @@
-import React, { useState } from "react";
-import { Eye, Edit2 } from "lucide-react";
-import { UserPlus2 } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import AjoutService from "./ajoutService";
-import { useDarkMode } from "../utils/DarkModeContext"; // Import contexte darkMode
+import React, { useState, useEffect } from "react";
+import { Eye, Edit2, RotateCcw, UserPlus2 } from "lucide-react";
+import AjoutService from "../superAdmin/ajoutService";
+import { useDarkMode } from "../utils/DarkModeContext";
 
 export default function Service() {
-
-  const { darkMode } = useDarkMode(); // Récupérer l'état sombre/clair
-
+  const { darkMode } = useDarkMode();
   const [openAjout, setOpenAjout] = useState(false);
   
   const services = [
@@ -24,55 +20,163 @@ export default function Service() {
     { id: 10, nom: "DCR", porte: 45, etage: "6", visites: 70 },
   ];
 
-  const topServices = [...services].sort((a, b) => b.visites - a.visites).slice(0, 10);
-
   const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState({ 
+    id: "", 
+    nom: "", 
+    porte: "", 
+    etage: "" 
+  });
+  const [searchValues, setSearchValues] = useState({ 
+    id: "", 
+    nom: "", 
+    porte: "", 
+    etage: "" 
+  });
 
-  const filteredServices = services.filter((service) =>
-    service.nom.toLowerCase().includes(search.toLowerCase())
-  );
+  useEffect(() => {
+    const timer = setTimeout(() => setFilters(searchValues), 500);
+    return () => clearTimeout(timer);
+  }, [searchValues]);
+
+  const filteredServices = services.filter((service) => {
+    return (
+      service.nom.toLowerCase().includes(search.toLowerCase()) &&
+      (filters.id === "" || service.id === Number(filters.id)) &&
+      (filters.nom === "" || service.nom.toLowerCase().includes(filters.nom.toLowerCase())) &&
+      (filters.porte === "" || service.porte === Number(filters.porte)) &&
+      (filters.etage === "" || service.etage.includes(filters.etage))
+    );
+  });
+
+  const handleChange = (e) => {
+    setSearchValues({ ...searchValues, [e.target.name]: e.target.value });
+  };
+
+  const handleReset = () => {
+    setSearch("");
+    setSearchValues({ id: "", nom: "", porte: "", etage: "" });
+    setFilters({ id: "", nom: "", porte: "", etage: "" });
+  };
 
   // Styles conditionnels
   const bgMain = darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900";
-  const cardBg = darkMode ? "bg-gray-800 text-gray-100 border-gray-600" : "bg-white border-blue-300";
-  const chartCardBg = darkMode ? "bg-gray-800 text-gray-100 border-green-600" : "bg-white border-green-300";
+  const cardBg = darkMode ? "bg-gray-800 text-gray-100 border-gray-600" : "bg-white text-gray-700 border-blue-300";
+  const filterCardBg = darkMode ? "bg-gray-800 text-gray-100 border-blue-200" : "bg-blue-200 text-gray-700 border-blue-200";
   const tableHead = darkMode ? "bg-gray-700 text-gray-200" : "bg-indigo-100 text-indigo-700";
   const tableRowHover = darkMode ? "hover:bg-gray-700" : "hover:bg-indigo-50";
   const inputBg = darkMode ? "bg-gray-700 text-white border-gray-500" : "bg-white text-black border-gray-300";
 
+  const buttonBaseClasses = `
+    relative inline-flex items-center justify-center px-5 py-2 border rounded-full font-semibold
+    transition duration-300 ease-in-out cursor-pointer select-none
+    focus:outline-none focus:ring-4 focus:ring-indigo-300
+  `;
+
+  const buttonVariants = {
+    primary: darkMode
+      ? "border-indigo-500 text-indigo-400 hover:text-white hover:bg-indigo-600 focus:ring-indigo-500"
+      : "border-indigo-600 text-indigo-700 hover:text-white hover:bg-indigo-600 focus:ring-indigo-300",
+    neutral: darkMode
+      ? "border-gray-500 text-gray-400 hover:text-white hover:bg-gray-600 focus:ring-gray-500"
+      : "border-gray-400 text-gray-700 hover:text-white hover:bg-gray-600 focus:ring-gray-300",
+    yellow: darkMode
+      ? "border-yellow-400 text-yellow-300 hover:bg-yellow-400 hover:text-gray-900"
+      : "border-yellow-600 text-yellow-700 hover:bg-yellow-600 hover:text-white",
+    green: darkMode
+      ? "border-green-400 text-green-300 hover:bg-green-400 hover:text-gray-900"
+      : "border-green-600 text-green-700 hover:bg-green-600 hover:text-white",
+    blue: darkMode
+      ? "border-blue-400 text-blue-300 hover:bg-blue-400 hover:text-gray-900"
+      : "border-blue-600 text-blue-700 hover:bg-blue-600 hover:text-white"
+  };
+
   return (
     <div className={`min-h-screen pt-24 px-4 md:px-10 transition-all duration-300 ${bgMain}`}>
-      <div className="flex flex-col lg:flex-row gap-8">
+      <h1 className="text-4xl font-extrabold mb-7 ml-2 md:ml-6">Services</h1>
+
+      <div className="flex flex-col md:flex-row gap-8 max-w-7xl px-6 mx-auto pb-10">
+
+        {/* Filtres */}
+        <section className={`rounded-xl shadow-lg md:p-8 w-full md:w-1/4 border-4 ${filterCardBg}`}>
+          <h2 className="text-2xl font-semibold text-center mb-6">Filtres</h2>
+
+          <div className="flex flex-col space-y-4">
+            {["id", "nom", "porte", "etage"].map((field) => (
+              <label key={field} className="flex flex-col font-medium capitalize">
+                {field === "etage" ? "Étage" : field === "porte" ? "Porte" : field}
+                <input
+                  type={field === "id" || field === "porte" ? "number" : "text"}
+                  name={field}
+                  value={searchValues[field]}
+                  onChange={handleChange}
+                  placeholder={`Filtrer par ${field === "etage" ? "étage" : field === "porte" ? "porte" : field}`}
+                  className={`mt-2 p-2 rounded-md border focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm
+                    ${darkMode ? "bg-gray-700 border-gray-600 text-gray-100" : "bg-white border-gray-300 text-gray-900"}`}
+                />
+              </label>
+            ))}
+            <button
+              onClick={handleReset}
+              className={`${buttonBaseClasses} ${buttonVariants.neutral} mt-4 w-full text-center`}
+              aria-label="Réinitialiser les filtres"
+            >
+              <RotateCcw className="w-5 h-5 mr-2" />
+              Réinitialiser
+            </button>
+          </div>
+        </section>
 
         {/* Tableau des services */}
-        <section className={`rounded-xl shadow-lg flex-1 overflow-hidden max-h-[80vh] border-4 ${cardBg}`}>
-          <div className={`sticky top-0 z-20 px-6 pt-4 pb-5 md:px-8 md:pt-6 md:pb-3 border-b ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-blue-200"}`}>
-            <h2 className="text-2xl font-semibold">Liste des Services</h2>
+        <section
+          className={`rounded-xl shadow-lg p-6 md:p-8 flex-1 overflow-y-auto max-h-[80vh] border-4 ${cardBg}`}
+        >
+          <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
+            <h2 className="text-2xl font-semibold">Liste des services</h2>
 
-            {/* Recherche */}
-            <div className="flex mt-4 gap-4">
-              <input
-                type="text"
-                placeholder="Rechercher un service..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className={`w-full p-2 rounded-md border-2 border-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-400 ${inputBg}`}
-              />
-              <button onClick={() => setOpenAjout(true)}>
-                <div className="flex shadow-xl justify-center items-center bg-green-600 rounded-2xl w-32 h-12 hover:scale-105 transition-transform p-2">
-                  <b><p className="text-white pr-2">Ajout</p></b>
-                  <UserPlus2 className="w-8 text-white" />
-                </div>
+            <div className="flex flex-wrap items-center gap-4">
+              {/* Bouton Voir tous */}
+              <button
+                onClick={handleReset}
+                className={`${buttonBaseClasses} ${buttonVariants.neutral} shadow-sm`}
+                aria-label="Voir tous les services"
+              >
+                Voir tous
+                <span className="ml-2 text-xl font-bold">→</span>
+              </button>
+
+              {/* Bouton Ajout */}
+              <button
+                onClick={() => setOpenAjout(true)}
+                className={`${buttonBaseClasses} ${buttonVariants.primary} shadow-lg`}
+                aria-label="Ajouter un service"
+              >
+                <UserPlus2 className="w-5 h-5 mr-2" />
+                Ajout
               </button>
             </div>
           </div>
 
-          <div className="overflow-y-auto h-[calc(80vh-130px)]">
+          {/* Recherche */}
+          <div className="mb-6">
+            <input
+              type="text"
+              placeholder="Rechercher un service..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className={`w-full p-2 rounded-md border-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 ${inputBg}`}
+            />
+          </div>
+
+          <div className="overflow-y-auto" style={{ maxHeight: "calc(80vh - 180px)" }}>
             <table className="w-full min-w-[600px] border-collapse table-auto">
-              <thead className={tableHead}>
+              <thead className={`${tableHead} sticky top-0 z-10`}>
                 <tr>
-                  {["ID", "Service", "Porte", "Étage", "Détail", "Modifier"].map((heading) => (
-                    <th key={heading} className="sticky top-0 px-6 py-5 border-b text-left font-medium whitespace-nowrap">
+                  {["ID", "Nom", "Porte", "Étage", "Actions", "Modifier"].map((heading) => (
+                    <th
+                      key={heading}
+                      className="px-6 py-3 border-b border-gray-300 text-left font-medium whitespace-nowrap"
+                    >
                       {heading}
                     </th>
                   ))}
@@ -80,61 +184,48 @@ export default function Service() {
               </thead>
 
               <tbody>
-                {filteredServices.length > 0 ? (
+                {filteredServices.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-10 text-gray-500">
+                      Aucun service trouvé.
+                    </td>
+                  </tr>
+                ) : (
                   filteredServices.map((service) => (
-                    <tr key={service.id} className={`${tableRowHover} transition-colors cursor-pointer`}>
+                    <tr
+                      key={service.id}
+                      className={`${tableRowHover} transition-colors cursor-pointer`}
+                    >
                       <td className="px-6 py-4 border-b whitespace-nowrap">{service.id}</td>
                       <td className="px-6 py-4 border-b whitespace-nowrap">{service.nom}</td>
                       <td className="px-6 py-4 border-b whitespace-nowrap">{service.porte}</td>
                       <td className="px-6 py-4 border-b whitespace-nowrap">{service.etage}</td>
-                      <td className="px-6 py-4 border-b whitespace-nowrap">
-                        <button className="flex items-center text-blue-400 hover:text-blue-600 transition">
-                          <Eye size={18} className="mr-1" />
-                          Voir
+                      <td className="px-6 py-1 border-b whitespace-nowrap">
+                        <button
+                          className={`inline-flex items-center justify-center px-3 py-1 rounded-full border transition duration-300 ${buttonVariants.yellow}`}
+                          aria-label={`Voir ${service.nom}`}
+                        >
+                          <Eye className="w-5 h-5" />
                         </button>
                       </td>
-                      <td className="px-6 py-4 border-b whitespace-nowrap">
-                        <button className="flex items-center text-green-400 hover:text-green-600 transition">
-                          <Edit2 size={18} className="mr-1" />
-                          Modifier
+                      <td className="px-6 py-1 border-b whitespace-nowrap">
+                        <button
+                          className={`inline-flex items-center justify-center px-3 py-1 rounded-full border transition duration-300 ${buttonVariants.blue}`}
+                          aria-label={`Modifier ${service.nom}`}
+                        >
+                          <Edit2 className="w-5 h-5" />
                         </button>
                       </td>
                     </tr>
                   ))
-                ) : (
-                  <tr>
-                    <td colSpan="6" className="text-center py-6 text-gray-400">
-                      Aucun service trouvé.
-                    </td>
-                  </tr>
                 )}
               </tbody>
             </table>
           </div>
         </section>
-
-        {/* Graphique */}
-        <section className={`rounded-xl shadow-lg p-6 md:p-8 w-full lg:w-1/3 h-[400px] border-4 ${chartCardBg}`}>
-          <h2 className="text-xl font-semibold mb-4">Top 10 des Services les plus visités</h2>
-
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={topServices}
-              layout="vertical"
-              margin={{ top: 10, right: 10, left: 10, bottom: 10 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#555" : "#ccc"} />
-              <XAxis type="number" stroke={darkMode ? "#ccc" : "#333"} />
-              <YAxis dataKey="nom" type="category" stroke={darkMode ? "#ccc" : "#333"} />
-              <Tooltip contentStyle={{ background: darkMode ? "#333" : "#fff", color: darkMode ? "#fff" : "#000" }} />
-              <Bar dataKey="visites" fill={darkMode ? "#FBBF24" : "#4CAF50"} />
-            </BarChart>
-          </ResponsiveContainer>
-
-          <AjoutService open={openAjout} onClose={() => setOpenAjout(false)} />
-        </section>
-
       </div>
+
+      <AjoutService open={openAjout} onClose={() => setOpenAjout(false)} />
     </div>
   );
 }

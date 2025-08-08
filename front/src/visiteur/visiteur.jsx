@@ -2,12 +2,34 @@ import React, { useState, useEffect } from "react";
 import VisiteListPopup from "./listeVisite";
 import { NotebookText, Edit2, UserPlus2 } from "lucide-react";
 import AjoutVisiteur from "./ajoutvisiteur";
+import AjoutVisite from "./ajoutVisite";
 import { useDarkMode } from "../utils/DarkModeContext";
 
 const utilisateursInitiaux = [
-  { id: 1, nom: "Andry", prenom: "Nirina", cin: "2010245124536", dateAjout: "2025-07-20" },
-  { id: 2, nom: "Mialy", prenom: "Lionnel", cin: "20105114250", dateAjout: "2025-07-21" },
-  { id: 3, nom: "Feno", prenom: "Grey", cin: "102410231546", dateAjout: "2025-07-22" },
+  { 
+    id: 1, 
+    nom: "Andry", 
+    prenom: "Nirina", 
+    cin: "2010245124536", 
+    dateAjout: "2025-07-20",
+    agentAccueil: "Rakoto Jean" 
+  },
+  { 
+    id: 2, 
+    nom: "Mialy", 
+    prenom: "Lionnel", 
+    cin: "20105114250", 
+    dateAjout: "2025-07-21",
+    agentAccueil: "Rasoa Marie" 
+  },
+  { 
+    id: 3, 
+    nom: "Feno", 
+    prenom: "Grey", 
+    cin: "102410231546", 
+    dateAjout: "2025-07-22",
+    agentAccueil: "Randria Paul" 
+  },
 ];
 
 export default function Visiteur() {
@@ -15,17 +37,19 @@ export default function Visiteur() {
   const today = new Date().toISOString().split("T")[0];
 
   const [utilisateurs, setUtilisateurs] = useState(utilisateursInitiaux);
-  const [filters, setFilters] = useState({ id: "", nom: "", prenom: "", cin: "" });
-  const [searchValues, setSearchValues] = useState({ id: "", nom: "", prenom: "", cin: "" });
+  const [filters, setFilters] = useState({ id: "", nom: "", prenom: "", cin: "", agentAccueil: "" });
+  const [searchValues, setSearchValues] = useState({ id: "", nom: "", prenom: "", cin: "", agentAccueil: "" });
   const [filteredUtilisateurs, setFilteredUtilisateurs] = useState(utilisateurs);
   const [openVisite, setOpenVisite] = useState(false);
   const [openAjout, setOpenAjout] = useState(false);
+  const [openAjoutVisite, setOpenAjoutVisite] = useState(false);
+  const [currentVisiteur, setCurrentVisiteur] = useState(null);
 
-  const visites = [
-    { id: 1, date: "2025-07-10", heureArr: "8:55", heureSor: "10:55", service: "DRFP", motif: "Réunion", chefService: "Mr TOVONIAINA Hasa" },
-    { id: 2, date: "2025-07-12", heureArr: "9:00", heureSor: "10:50", service: "DTFP", motif: "Dépôt de dossier", chefService: "Mme RAMANATSOA Lala" },
-    { id: 3, date: "2025-07-15", heureArr: "10:20", heureSor: "11:55", service: "DRFP", motif: "Entretien", chefService: "Mr LAZANIRINA Manana" },
-  ];
+  const [visites, setVisites] = useState([
+    { id: 1, visiteurId: 1, date: "2025-07-10", service: "DRFP", motif: "Réunion", personneVisite: "Mr. Rakoto" },
+    { id: 2, visiteurId: 2, date: "2025-07-12", service: "DTFP", motif: "Dépôt de dossier", personneVisite: "Mme. Rasoa" },
+    { id: 3, visiteurId: 3, date: "2025-07-15", service: "DRFP", motif: "Entretien", personneVisite: "Mr. Randria" },
+  ]);
 
   useEffect(() => {
     const timer = setTimeout(() => setFilters(searchValues), 500);
@@ -38,7 +62,8 @@ export default function Visiteur() {
         (filters.id === "" || user.id === Number(filters.id)) &&
         (filters.nom === "" || user.nom.toLowerCase().includes(filters.nom.toLowerCase())) &&
         (filters.prenom === "" || user.prenom.toLowerCase().includes(filters.prenom.toLowerCase())) &&
-        (filters.cin === "" || user.cin.toLowerCase().includes(filters.cin.toLowerCase()))
+        (filters.cin === "" || user.cin.toLowerCase().includes(filters.cin.toLowerCase())) &&
+        (filters.agentAccueil === "" || user.agentAccueil.toLowerCase().includes(filters.agentAccueil.toLowerCase()))
       );
     });
     setFilteredUtilisateurs(result);
@@ -47,16 +72,30 @@ export default function Visiteur() {
   const handleChange = (e) => setSearchValues({ ...searchValues, [e.target.name]: e.target.value });
 
   const handleReset = () => {
-    setSearchValues({ id: "", nom: "", prenom: "", cin: "" });
-    setFilters({ id: "", nom: "", prenom: "", cin: "" });
+    setSearchValues({ id: "", nom: "", prenom: "", cin: "", agentAccueil: "" });
+    setFilters({ id: "", nom: "", prenom: "", cin: "", agentAccueil: "" });
   };
 
-  // Fonction ajout visiteur (obligatoire)
   const handleAjoutVisiteur = (newVisiteur) => {
     const newId = utilisateurs.length > 0 ? utilisateurs[utilisateurs.length - 1].id + 1 : 1;
-    const newUser = { ...newVisiteur, id: newId, dateAjout: today };
+    const newUser = { 
+      ...newVisiteur, 
+      id: newId, 
+      dateAjout: today,
+      agentAccueil: newVisiteur.agentAccueil || "Non spécifié"
+    };
     setUtilisateurs([...utilisateurs, newUser]);
     setOpenAjout(false);
+  };
+
+  const handleAddVisite = (newVisite) => {
+    const visiteWithVisitor = {
+      ...newVisite,
+      visiteurId: currentVisiteur.id,
+      visiteurNom: `${currentVisiteur.prenom} ${currentVisiteur.nom}`
+    };
+    setVisites([...visites, visiteWithVisitor]);
+    setOpenAjoutVisite(false);
   };
 
   const nouveauxVisiteurs = utilisateurs.filter(u => u.dateAjout === today).length;
@@ -92,15 +131,15 @@ export default function Visiteur() {
           <h2 className="text-2xl font-semibold text-center mb-6">Filtres</h2>
 
           <div className="flex flex-col space-y-4">
-            {["id", "nom", "prenom", "cin"].map((field) => (
+            {["id", "nom", "cin", "agentAccueil"].map((field) => (
               <label key={field} className="flex flex-col font-medium capitalize">
-                {field}
+                {field === "agentAccueil" ? "Agent d'accueil" : field}
                 <input
                   type={field === "id" ? "number" : "text"}
                   name={field}
                   value={searchValues[field]}
                   onChange={handleChange}
-                  placeholder={`Rechercher par ${field}`}
+                  placeholder={`Rechercher par ${field === "agentAccueil" ? "agent d'accueil" : field}`}
                   className={`mt-2 p-2 rounded-md border focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm
                     ${darkMode ? "bg-gray-700 border-gray-600 text-gray-100" : "bg-white border-gray-300 text-gray-900"}`}
                 />
@@ -140,8 +179,8 @@ export default function Visiteur() {
               {/* Bouton Voir tous */}
               <button
                 onClick={() => {
-                  setFilters({ id: "", nom: "", prenom: "", cin: "" });
-                  setSearchValues({ id: "", nom: "", prenom: "", cin: "" });
+                  setFilters({ id: "", nom: "", cin: "", agentAccueil: "" });
+                  setSearchValues({ id: "", nom: "", cin: "", agentAccueil: "" });
                 }}
                 className={`${buttonBaseClasses} ${buttonVariants.neutral} shadow-sm`}
                 aria-label="Voir tous les visiteurs"
@@ -166,7 +205,7 @@ export default function Visiteur() {
           <table className="w-full min-w-[600px] border-collapse table-auto">
             <thead className={`${tableHead} sticky top-0 z-10`}>
               <tr>
-                {["ID", "Nom", "Prénom", "CIN", "Visite", "Modifier"].map((heading) => (
+                {["ID", "Nom", "Prénom", "CIN", "Agent d'accueil", "Actions", "Modifier"].map((heading) => (
                   <th
                     key={heading}
                     className="px-6 py-3 border-b border-gray-300 text-left font-medium whitespace-nowrap"
@@ -180,7 +219,7 @@ export default function Visiteur() {
             <tbody>
               {filteredUtilisateurs.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-10 text-gray-500">
+                  <td colSpan={7} className="text-center py-10 text-gray-500">
                     Aucun visiteur trouvé.
                   </td>
                 </tr>
@@ -194,9 +233,13 @@ export default function Visiteur() {
                     <td className="px-6 py-4 border-b whitespace-nowrap">{user.nom}</td>
                     <td className="px-6 py-4 border-b whitespace-nowrap">{user.prenom}</td>
                     <td className="px-6 py-4 border-b whitespace-nowrap">{user.cin}</td>
-                    <td className="px-6 py-1 border-b whitespace-nowrap">
+                    <td className="px-6 py-4 border-b whitespace-nowrap">{user.agentAccueil}</td>
+                    <td className="px-6 py-1 border-b whitespace-nowrap space-x-2">
                       <button
-                        onClick={() => setOpenVisite(true)}
+                        onClick={() => {
+                          setCurrentVisiteur(user);
+                          setOpenVisite(true);
+                        }}
                         className={`inline-flex items-center justify-center px-3 py-1 rounded-full
                           border transition duration-300
                           ${
@@ -207,6 +250,22 @@ export default function Visiteur() {
                         aria-label={`Voir visite de ${user.prenom} ${user.nom}`}
                       >
                         <NotebookText className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setCurrentVisiteur(user);
+                          setOpenAjoutVisite(true);
+                        }}
+                        className={`inline-flex items-center justify-center px-3 py-1 rounded-full
+                          border transition duration-300
+                          ${
+                            darkMode
+                              ? "border-green-400 text-green-300 hover:bg-green-400 hover:text-gray-900"
+                              : "border-green-600 text-green-700 hover:bg-green-600 hover:text-white"
+                          }`}
+                        aria-label={`Ajouter visite pour ${user.prenom} ${user.nom}`}
+                      >
+                        <UserPlus2 className="w-5 h-5" />
                       </button>
                     </td>
                     <td className="px-6 py-1 border-b whitespace-nowrap">
@@ -229,8 +288,24 @@ export default function Visiteur() {
             </tbody>
           </table>
 
-          <AjoutVisiteur open={openAjout} onClose={() => setOpenAjout(false)} onAdd={handleAjoutVisiteur} />
-          <VisiteListPopup open={openVisite} onClose={() => setOpenVisite(false)} visites={visites} />
+          <AjoutVisiteur 
+            open={openAjout} 
+            onClose={() => setOpenAjout(false)} 
+            onAdd={handleAjoutVisiteur} 
+            withAgentAccueil
+          />
+          
+          <VisiteListPopup 
+            open={openVisite} 
+            onClose={() => setOpenVisite(false)} 
+            visites={visites.filter(v => v.visiteurId === currentVisiteur?.id)} 
+          />
+          
+          <AjoutVisite
+            open={openAjoutVisite}
+            onClose={() => setOpenAjoutVisite(false)}
+            onAdd={handleAddVisite}
+          />
         </section>
       </div>
     </div>

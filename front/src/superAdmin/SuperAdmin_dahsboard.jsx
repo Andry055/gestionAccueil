@@ -42,10 +42,16 @@ export default function SuperAdminDashboard() {
         {/* Statistiques */}
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className={`rounded-xl shadow-xl p-4 flex flex-col items-center justify-center text-center h-full 
-            ${darkMode ? "bg-gray-800" : "bg-white"}`}>
+            ${darkMode ? "bg-gray-800" : "bg-gray-300"}`}>
             <CalendarDaysIcon className={`h-10 w-10 mb-2 ${darkMode ? "text-indigo-400" : "text-indigo-700"}`} />
             <p className="text-2xl font-bold">{visitesAujourdhui}</p>
             <p className={`${textSecondary} text-sm`}>Visites Aujourd’hui</p>
+          </div>
+          <div className={`rounded-xl shadow-xl p-4 flex flex-col items-center justify-center text-center h-full 
+            ${darkMode ? "bg-gray-800" : "bg-gray-300"}`}>
+            <CalendarDaysIcon className={`h-10 w-10 mb-2 ${darkMode ? "text-indigo-400" : "text-indigo-700"}`} />
+            <p className="text-2xl font-bold">14</p>
+            <p className={`${textSecondary} text-sm`}>Service Visité Aujourd’hui</p>
           </div>
         </section>
         

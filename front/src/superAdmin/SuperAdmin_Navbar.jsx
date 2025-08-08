@@ -25,9 +25,9 @@ export default function SuperNavbar() {
 
   const links = [
     { path: "/superAdmin_dahsboard", label: "Accueil" },
-    { path: "/utilisateur", label: "Utilisateur" },
+    { path: "/gestionCompte", label: "Utilisateur" },
     { path: "/visiteur", label: "Visiteur" },
-    { path: "/service", label: "Service" },
+    { path: "/superAdmin_service", label: "Service" },
     { path: "/superAdmin_stastistique", label: "Statistiques" },
     { path: "/about", label: "À propos" },
   ];
