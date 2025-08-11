@@ -1,8 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import  dotenv  from 'dotenv';
-import authRoutes from './routes/authRoutes.js'; // ✅ Vérifie que ce chemin est correct
+import authRoutes from './routes/authRoutes.js'; 
 import { register } from './controllers/registerController.js';
+import visiteRoutes from './routes/ajoutVisiteRoutes.js';
+import Service from './routes/serviceRoutes.js'
 
 dotenv.config();
 
@@ -18,7 +20,9 @@ app.get('/', (req, res) => {
   res.send('✅ Serveur backend opérationnel !');
 });
 
-// Route API de login
+// Route API
+app.use('/service',Service);
+app.use('/visite', visiteRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/register', register);
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from "react-router-dom";
-import { UserIcon, DocumentTextIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
+import { UserIcon, DocumentTextIcon, Cog6ToothIcon, EyeIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { useDarkMode } from '../utils/DarkModeContext';
 import AjoutVisiteur from '../visiteur/ajoutvisiteur';
 
@@ -40,6 +40,26 @@ export default function Home() {
   const bgMain = darkMode ? "bg-gray-900" : "bg-gray-100";
   const textPrimary = darkMode ? "text-gray-100" : "text-gray-900";
   const textSecondary = darkMode ? "text-gray-300" : "text-gray-700";
+  const tableHead = darkMode ? "bg-gray-700 text-gray-200" : "bg-indigo-100 text-indigo-700";
+  const tableRowHover = darkMode ? "hover:bg-gray-700" : "hover:bg-indigo-50";
+
+  const buttonBaseClasses = `
+    relative inline-flex items-center justify-center px-3 py-1 rounded-full border font-semibold
+    transition duration-300 ease-in-out cursor-pointer select-none
+    focus:outline-none focus:ring-2 focus:ring-opacity-50
+  `;
+
+  const buttonVariants = {
+    yellow: darkMode
+      ? "border-yellow-400 text-yellow-300 hover:bg-yellow-400 hover:text-gray-900"
+      : "border-yellow-600 text-yellow-700 hover:bg-yellow-600 hover:text-white",
+    green: darkMode
+      ? "border-green-400 text-green-300 hover:bg-green-400 hover:text-gray-900"
+      : "border-green-600 text-green-700 hover:bg-green-600 hover:text-white",
+    blue: darkMode
+      ? "border-blue-400 text-blue-300 hover:bg-blue-400 hover:text-gray-900"
+      : "border-blue-600 text-blue-700 hover:bg-blue-600 hover:text-white"
+  };
 
   return (
     <div className={`min-h-screen transition-all duration-300 ${bgMain}`}>
@@ -54,7 +74,7 @@ export default function Home() {
             </p>
 
             {/* ---- Petit menu amélioré ---- */}
-            <div className="flex gap-2 mt-6  border-b-2 border-gray-300">
+            <div className="flex gap-2 mt-6 border-b-2 border-gray-300">
               <button 
                 className={`px-5 py-2 rounded-t-lg font-semibold transition-all duration-300 
                   ${mode === "visiteurs" 
@@ -78,20 +98,20 @@ export default function Home() {
 
           {/* Compteurs */}
           <div className={`border-4 rounded-xl shadow-xl px-3 py-4 min-w-[200px]
-            ${darkMode ? "bg-gray-800  border-gray-600" : "bg-white border-blue-300"}`}>
+            ${darkMode ? "bg-gray-800 border-gray-600" : "bg-white border-blue-300"}`}>
             
             <h2 className="text-lg font-semibold text-center mb-3">Aujourd'hui</h2>
             
             <div className="flex justify-center gap-3">
               <div className={`rounded-lg p-2 shadow-md text-center w-24
                 ${darkMode ? "bg-gray-700" : "bg-blue-100"}`}>
-                <p className="text-xs text-gray-200">Visiteurs</p>
+                <p className="text-xs">Visiteurs</p>
                 <p className="text-2xl font-bold">{visites.length}</p>
               </div>
               
               <div className={`rounded-lg p-2 shadow-md text-center w-24
                 ${darkMode ? "bg-gray-700" : "bg-blue-100"}`}>
-                <p className="text-xs text-gray-200">Services</p>
+                <p className="text-xs">Services</p>
                 <p className="text-2xl font-bold">{Object.keys(services).length}</p>
               </div>
             </div>
@@ -120,46 +140,57 @@ export default function Home() {
                     />
                     <button
                       onClick={() => setSearchTerm("")}
-                      className="px-4 py-2 bg-red-400 text-white rounded-md hover:bg-red-600 transition"
+                      className={`${buttonBaseClasses} ${buttonVariants.blue} px-4 py-2`}
                     >
                       Réinitialiser
                     </button>
                   </div>
                 </div>
 
-                <table className="w-full border-collapse text-sm md:text-base">
-                  <thead>
-                    <tr className="bg-gradient-to-r from-blue-100 to-blue-200 text-gray-800 text-left">
-                      <th className="px-4 py-3 rounded-tl-lg">Nom</th>
-                      <th className="px-4 py-3">Prénom</th>
-                      <th className="px-4 py-3">Service</th>
-                      <th className="px-4 py-3">Heure Arrivée</th>
-                      <th className="px-4 py-3 text-center rounded-tr-lg">Action</th>
+                <table className="w-full min-w-[600px] border-collapse table-auto">
+                  <thead className={`${tableHead} sticky top-0 z-10`}>
+                    <tr>
+                      {["ID", "Nom", "Prénom", "Service", "Heure Arrivée", "Actions"].map((heading) => (
+                        <th
+                          key={heading}
+                          className="px-6 py-3 border-b border-gray-300 text-left font-medium whitespace-nowrap"
+                        >
+                          {heading}
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
                     {visitesEnCours.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="text-center py-8 text-gray-500">
+                        <td colSpan={6} className="text-center py-10 text-gray-500">
                           Aucun visiteur en cours.
                         </td>
                       </tr>
                     ) : (
                       visitesEnCours.map((v) => (
-                        <tr 
-                          key={v.id} 
-                          className="hover:bg-blue-50 transition-colors border-b border-gray-200"
+                        <tr
+                          key={v.id}
+                          className={`${tableRowHover} transition-colors cursor-pointer`}
                         >
-                          <td className="px-4 py-2">{v.nom}</td>
-                          <td className="px-4 py-2">{v.prenom}</td>
-                          <td className="px-4 py-2">{v.service}</td>
-                          <td className="px-4 py-2">{v.heureArr}</td>
-                          <td className="px-4 py-2 text-center">
+                          <td className="px-6 py-4 border-b whitespace-nowrap">{v.id}</td>
+                          <td className="px-6 py-4 border-b whitespace-nowrap">{v.nom}</td>
+                          <td className="px-6 py-4 border-b whitespace-nowrap">{v.prenom}</td>
+                          <td className="px-6 py-4 border-b whitespace-nowrap">{v.service}</td>
+                          <td className="px-6 py-4 border-b whitespace-nowrap">{v.heureArr}</td>
+                          <td className="px-6 py-1 border-b whitespace-nowrap space-x-2">
                             <button
                               onClick={() => terminerVisite(v.id)}
-                              className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm shadow-sm"
+                              className={`${buttonBaseClasses} ${buttonVariants.green}`}
+                              aria-label={`Terminer visite de ${v.prenom} ${v.nom}`}
                             >
                               Terminer
+                            </button>
+                            <button
+                              className={`${buttonBaseClasses} ${buttonVariants.blue}`}
+                              aria-label={`Modifier ${v.prenom} ${v.nom}`}
+                            >
+                              <PencilIcon className="w-4 h-4" />
                             </button>
                           </td>
                         </tr>
@@ -174,28 +205,42 @@ export default function Home() {
             {mode === "services" && (
               <>
                 <h2 className="text-2xl font-bold mb-4">Services - Nombre de visiteurs</h2>
-                <table className="w-full border-collapse text-sm md:text-base">
-                  <thead>
-                    <tr className="bg-gradient-to-r from-blue-100 to-blue-200 text-gray-800 text-left">
-                      <th className="px-4 py-3 rounded-tl-lg">Service</th>
-                      <th className="px-4 py-3 text-center rounded-tr-lg">Nombre de visiteurs</th>
+                <table className="w-full min-w-[600px] border-collapse table-auto">
+                  <thead className={`${tableHead} sticky top-0 z-10`}>
+                    <tr>
+                      {["Service", "Nombre de visiteurs", "Actions"].map((heading) => (
+                        <th
+                          key={heading}
+                          className="px-6 py-3 border-b border-gray-300 text-left font-medium whitespace-nowrap"
+                        >
+                          {heading}
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
                     {Object.keys(services).length === 0 ? (
                       <tr>
-                        <td colSpan={2} className="text-center py-8 text-gray-500">
+                        <td colSpan={3} className="text-center py-10 text-gray-500">
                           Aucun service aujourd'hui.
                         </td>
                       </tr>
                     ) : (
                       Object.entries(services).map(([service, nb]) => (
-                        <tr 
-                          key={service} 
-                          className="hover:bg-blue-50 transition-colors border-b border-gray-200"
+                        <tr
+                          key={service}
+                          className={`${tableRowHover} transition-colors cursor-pointer`}
                         >
-                          <td className="px-4 py-2">{service}</td>
-                          <td className="px-4 py-2 text-center">{nb}</td>
+                          <td className="px-6 py-4 border-b whitespace-nowrap">{service}</td>
+                          <td className="px-6 py-4 border-b whitespace-nowrap text-center">{nb}</td>
+                          <td className="px-6 py-1 border-b whitespace-nowrap space-x-2">
+                            <button
+                              className={`${buttonBaseClasses} ${buttonVariants.yellow}`}
+                              aria-label={`Voir détails pour ${service}`}
+                            >
+                              <EyeIcon className="w-4 h-4" />
+                            </button>
+                          </td>
                         </tr>
                       ))
                     )}
