@@ -1,4 +1,5 @@
-import { createService, DeleteService, updateService } from "../models/lieuModel.js";
+import { CountVisiteurService, createService, DeleteService, SelectAllService, updateService } from "../models/lieuModel.js";
+import { CountServiceNow } from "../models/visiteModel.js";
 
 export async function createServiceControlleur(req ,res ) {
     const {nom, porte, etage }= req.body;
@@ -33,5 +34,43 @@ export async function DeleteServiceController(req, res) {
     catch(err){
         console.error(err);
         res.status(500).json({ error: "Erreur serveur" });
+    }
+}
+
+export async function SelectAllServiceControlleur(req, res) {
+    try{
+        let lieu= await SelectAllService();
+        res.status(200).json({message:"Liste des Lieux", lieu});
+
+    }
+    catch(err){
+        console.error(err);
+        res.status(500).json({error: "Erreur pour Listé les Lieux"});
+    }
+}
+
+//STATISTIQUES 
+
+export async function SelectCountVisiteurServiceControlleur(req, res) {
+    try{
+        let lieu= await CountVisiteurService();
+        res.status(200).json({message:"Liste des Lieux avec le nombre des viciteur", lieu});
+
+    }
+    catch(err){
+        console.error(err);
+        res.status(500).json({error: "Erreur pour Listé les Lieux avec nombres des visiteurs"});
+    }
+}
+
+export async function CountServiceControlleur(req, res) {
+    try{
+        let nblieu = await CountServiceNow();
+        res.status(200).json({message:"Nombre des service visitée aujourd'hui", nblieu});
+
+    }
+    catch(err){
+        console.error(err);
+        res.status(500).json({error: "Erreur lors de la recuperation des nombre des lieu"});
     }
 }

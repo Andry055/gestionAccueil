@@ -4,15 +4,29 @@ import { ajoutVisitePersonne } from '../controllers/ajoutVisiteurController.js';
 import { visiteterminerControlleur } from '../controllers/ajoutVisiteurController.js';
 import { visitePersonneTerminerController } from '../controllers/ajoutVisiteurController.js';
 import { updateVisiteurControlleur } from '../controllers/ajoutVisiteurController.js';
-
+import { updateVisiteLieuControlleur } from '../controllers/ajoutVisiteurController.js';
+import { getAllVisiteursController } from '../controllers/ajoutVisiteurController.js';
+import { getAllVisiteLieuController } from '../controllers/ajoutVisiteurController.js';
+import { AllVisiteLieuControlleur } from '../controllers/ajoutVisiteurController.js';
+import { AllVisitePersonneControlleur } from '../controllers/ajoutVisiteurController.js';
+import { CountVisiteEncoursControlleur } from '../controllers/ajoutVisiteurController.js';
+import { CountVisiteursNowControlleur } from '../controllers/ajoutVisiteurController.js';
 
 const router = express.Router();
 
 router.post('/ajoutVisite', createVisiteController);
-router.post('/updateVisiteur', updateVisiteurControlleur);
-router.post('/visiteTermine', visiteterminerControlleur);
+router.put('/updateVisiteur', updateVisiteurControlleur);
+router.put('/visiteTermine', visiteterminerControlleur);
 router.post('/visitePersonne', ajoutVisitePersonne);
-router.post('/visitePersonneTerminer', visitePersonneTerminerController);
+router.put('/visitePersonneTerminer', visitePersonneTerminerController);
+router.put('/updateVisiteLieu', updateVisiteLieuControlleur);
+router.get('/listeVisiteur', getAllVisiteursController);
+router.get('/listeVisite', getAllVisiteLieuController);
+router.get('/listeVisiteNotLieu', AllVisiteLieuControlleur);
+router.get('/listeVisiteNotPersonne', AllVisitePersonneControlleur);
+router.get('/nombreVisiteEncours', CountVisiteEncoursControlleur);
+router.get('/nombreVisiteurs', CountVisiteursNowControlleur);
+
 
 
 export default router;

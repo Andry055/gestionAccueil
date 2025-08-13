@@ -9,12 +9,13 @@ export default function Home() {
   const [openAjout, setOpenAjout] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [mode, setMode] = useState("visiteurs"); // visiteurs | services
+  const [sousMode, setSousMode] = useState("lieu"); // lieu | personne
 
   // Liste des visites
   const [visites, setVisites] = useState([
-    { id: 1, nom: "Andry", prenom: "Nirina", service: "DRFP", heureArr: "08:30", heureSor: "" },
-    { id: 2, nom: "Mialy", prenom: "Lionnel", service: "DTFP", heureArr: "09:15", heureSor: "" },
-    { id: 3, nom: "Feno", prenom: "Grey", service: "DRFP", heureArr: "10:20", heureSor: "" }
+    { id: 1, nom: "Andry", prenom: "Nirina", service: "DRFP", heureArr: "08:30", heureSor: "", personneVisitee: "Jean Dupont" },
+    { id: 2, nom: "Mialy", prenom: "Lionnel", service: "DTFP", heureArr: "09:15", heureSor: "", personneVisitee: "Marie Martin" },
+    { id: 3, nom: "Feno", prenom: "Grey", service: "DRFP", heureArr: "10:20", heureSor: "", personneVisitee: "Paul Durand" }
   ]);
 
   // Filtrer les visites en cours
@@ -22,8 +23,9 @@ export default function Home() {
     (v) => !v.heureSor &&
       (v.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
        v.prenom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       v.service.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+       v.service.toLowerCase().includes(searchTerm.toLowerCase()) ||
+       (v.personneVisitee && v.personneVisitee.toLowerCase().includes(searchTerm.toLowerCase()))
+  ));
 
   // Regrouper par service
   const services = visites.reduce((acc, v) => {
@@ -111,8 +113,17 @@ export default function Home() {
               
               <div className={`rounded-lg p-2 shadow-md text-center w-24
                 ${darkMode ? "bg-gray-700" : "bg-blue-100"}`}>
-                <p className="text-xs">Services</p>
+                <p className="text-xs">Services visité</p>
                 <p className="text-2xl font-bold">{Object.keys(services).length}</p>
+              </div>
+
+              {/* Nouveau compteur pour les visites en cours */}
+              <div className={`rounded-lg p-2 shadow-md text-center w-24
+                ${darkMode ? "bg-gray-700" : "bg-green-100"}`}>
+                <p className="text-xs">Visite en cours</p>
+                <p className="text-2xl font-bold">
+                  {visites.filter(v => !v.heureSor).length}
+                </p>
               </div>
             </div>
           </div>
@@ -127,15 +138,38 @@ export default function Home() {
             {mode === "visiteurs" && (
               <>
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 gap-4">
-                  <h2 className="text-2xl font-bold">Visiteurs en cours</h2>
+                  <div>
+                    <h2 className="text-2xl font-bold">Visiteurs en cours</h2>
+                    {/* Sous-menu pour filtrer par type de visite */}
+                    <div className="flex gap-2 mt-2">
+                      <button 
+                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-all
+                          ${sousMode === "lieu" 
+                            ? darkMode ? "bg-blue-600 text-white" : "bg-blue-500 text-white"
+                            : darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}
+                        onClick={() => setSousMode("lieu")}
+                      >
+                        Visite Lieu
+                      </button>
+                      <button 
+                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-all
+                          ${sousMode === "personne" 
+                            ? darkMode ? "bg-blue-600 text-white" : "bg-blue-500 text-white"
+                            : darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}
+                        onClick={() => setSousMode("personne")}
+                      >
+                        Visite Personne
+                      </button>
+                    </div>
+                  </div>
                   <div className="flex gap-2">
                     <input
                       type="text"
-                      placeholder="Rechercher..."
+                      placeholder={`Rechercher ${sousMode === "lieu" ? "service, nom..." : "personne, nom..."}`}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className={`p-2 rounded-md border focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                        darkMode ? "bg-gray-700 border-gray-500 text-white" : "bg-white border-gray-800 text-black"
+                        darkMode ? "bg-gray-700 border-gray-500 text-white" : "bg-white border-gray-300 text-black"
                       }`}
                     />
                     <button
@@ -150,7 +184,9 @@ export default function Home() {
                 <table className="w-full min-w-[600px] border-collapse table-auto">
                   <thead className={`${tableHead} sticky top-0 z-10`}>
                     <tr>
-                      {["ID", "Nom", "Prénom", "Service", "Heure Arrivée", "Actions"].map((heading) => (
+                      {["ID", "Nom", "Prénom", 
+                        sousMode === "lieu" ? "Service" : "Personne visitée", 
+                        "Heure Arrivée", "Actions"].map((heading) => (
                         <th
                           key={heading}
                           className="px-6 py-3 border-b border-gray-300 text-left font-medium whitespace-nowrap"
@@ -164,19 +200,23 @@ export default function Home() {
                     {visitesEnCours.length === 0 ? (
                       <tr>
                         <td colSpan={6} className="text-center py-10 text-gray-500">
-                          Aucun visiteur en cours.
+                          {searchTerm 
+                            ? "Aucun résultat correspondant à votre recherche"
+                            : `Aucun visiteur en ${sousMode === "lieu" ? "lieu" : "personne"} actuellement`}
                         </td>
                       </tr>
                     ) : (
                       visitesEnCours.map((v) => (
                         <tr
                           key={v.id}
-                          className={`${tableRowHover} transition-colors cursor-pointer`}
+                          className={`${tableRowHover} transition-colors`}
                         >
                           <td className="px-6 py-4 border-b whitespace-nowrap">{v.id}</td>
                           <td className="px-6 py-4 border-b whitespace-nowrap">{v.nom}</td>
                           <td className="px-6 py-4 border-b whitespace-nowrap">{v.prenom}</td>
-                          <td className="px-6 py-4 border-b whitespace-nowrap">{v.service}</td>
+                          <td className="px-6 py-4 border-b whitespace-nowrap">
+                            {sousMode === "lieu" ? v.service : v.personneVisitee}
+                          </td>
                           <td className="px-6 py-4 border-b whitespace-nowrap">{v.heureArr}</td>
                           <td className="px-6 py-1 border-b whitespace-nowrap space-x-2">
                             <button
@@ -191,6 +231,12 @@ export default function Home() {
                               aria-label={`Modifier ${v.prenom} ${v.nom}`}
                             >
                               <PencilIcon className="w-4 h-4" />
+                            </button>
+                            <button
+                              className={`${buttonBaseClasses} ${buttonVariants.yellow}`}
+                              aria-label={`Voir détails ${v.prenom} ${v.nom}`}
+                            >
+                              <EyeIcon className="w-4 h-4" />
                             </button>
                           </td>
                         </tr>
@@ -222,14 +268,14 @@ export default function Home() {
                     {Object.keys(services).length === 0 ? (
                       <tr>
                         <td colSpan={3} className="text-center py-10 text-gray-500">
-                          Aucun service aujourd'hui.
+                          Aucun service visité aujourd'hui.
                         </td>
                       </tr>
                     ) : (
                       Object.entries(services).map(([service, nb]) => (
                         <tr
                           key={service}
-                          className={`${tableRowHover} transition-colors cursor-pointer`}
+                          className={`${tableRowHover} transition-colors`}
                         >
                           <td className="px-6 py-4 border-b whitespace-nowrap">{service}</td>
                           <td className="px-6 py-4 border-b whitespace-nowrap text-center">{nb}</td>
@@ -253,7 +299,10 @@ export default function Home() {
           {/* Boutons latéraux */}
           <div className="space-y-6">
             <div className="grid grid-cols-1 gap-6 px-2">
-              <button onClick={() => setOpenAjout(true)} className="hover:scale-105 transition-transform w-full">
+              <button 
+                onClick={() => setOpenAjout(true)} 
+                className="hover:scale-105 transition-transform w-full"
+              >
                 <div className={`rounded-xl shadow-xl p-2 flex flex-col items-center justify-center text-center h-full
                   ${darkMode ? "bg-gray-700" : "bg-blue-200"}`}>
                   <UserIcon className={`h-10 w-10 mb-2 ${darkMode ? "text-amber-300" : "text-black"}`} />

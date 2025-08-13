@@ -18,3 +18,17 @@ export async function DeleteService(id_lieu,nomLieu, porte, etage) {
         [id_lieu]
     );
 }
+
+export async function SelectAllService() {
+    const result = await pool.query("SELECT * FROM lieu ",
+    );
+    return result.rows;  
+}
+
+// Statistique
+
+export async function CountVisiteurService() {
+    const result = await pool.query("SELECT l.nom_lieu AS nom_lieu, COUNT(vis.id_visiteur) AS nombre_visiteurs FROM lieu l LEFT JOIN visites_lieu vis ON l.id_lieu = vis.id_lieu GROUP BY l.nom_lieu ORDER BY  nombre_visiteurs DESC;"
+    );
+    return result.rows;
+}
