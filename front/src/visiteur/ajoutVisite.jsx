@@ -1,34 +1,115 @@
-import React, { useState } from "react";
-import { X, User, Building } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { useDarkMode } from "../utils/DarkModeContext";
+import { useAuth } from "../AuthContext";
+import axios from "axios";
 
-const motifs = ["Réunion", "Entretien", "Dépôt de dossier", "Visite amicale", "Autre"];
-const services = ["DRFP", "DAFP", "DTFP", "DCR", "DG", "DAG", "Archive"];
-
-export default function AjoutVisite({ open, onClose, onAdd }) {
+export default function AjoutVisite({ open, onClose, visiteur }) {
   const { darkMode } = useDarkMode();
+  const { user } = useAuth();
   const [visitType, setVisitType] = useState(null);
+  const [searchService, setSearchService] = useState("");
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
   const [formData, setFormData] = useState({
-    service: "",
+    nom: visiteur?.nom || "",
+    prenom: visiteur?.prenom || "",
+    cin: visiteur?.cin || "",
+    nomAgent: user?.username || 'Système',
+    nomPersonne: "",
     motif: "",
-    personneVisite: "",
+    nomService: "",
   });
 
+  const [servicesList, setServicesList] = useState([]);
+
+  useEffect(() => {
+    const chargerServices = async () => {
+      try {
+        const response = await axios.get(`http://localhost:5000/service/listeService`);
+        setServicesList(response.data.data || []);
+      } catch (err) {
+        console.error("Erreur chargement services:", err);
+        setServicesList([]);
+      }
+    };
+    chargerServices();
+  }, []);
+
+  useEffect(() => {
+    // Mettre à jour les données du visiteur quand il change
+    if (visiteur) {
+      setFormData(prev => ({
+        ...prev,
+        nom: visiteur.nom,
+        prenom: visiteur.prenom,
+        cin: visiteur.cin
+      }));
+    }
+  }, [visiteur]);
+
+  const filteredServices = servicesList.filter(service =>
+    service?.nom_lieu?.toLowerCase()?.includes(searchService.toLowerCase().trim())
+  );
+
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const newVisite = {
+  const handleSelectService = (serviceName) => {
+    setFormData({
       ...formData,
-      type: visitType,
-      id: Math.floor(Math.random() * 10000),
-      date: new Date().toISOString().split("T")[0] // Ajout automatique de la date actuelle
-    };
-    onAdd(newVisite);
-    onClose();
+      nomService: serviceName
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const endpoint = visitType === 'person' 
+        ? "http://localhost:5000/visite/visitePersonne" 
+        : "http://localhost:5000/visite/ajoutVisite";
+
+      const completeData = {
+        ...formData,
+        id_visiteur: visiteur?.id_visiteur // Ajout de l'ID visiteur
+      };
+
+      const response = await axios.post(endpoint, completeData, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      setSuccess(true);
+      setFormData({
+        nom: visiteur?.nom || "",
+        prenom: visiteur?.prenom || "",
+        cin: visiteur?.cin || "",
+        nomAgent: user?.username || 'Système',
+        nomPersonne: "",
+        motif: "",
+        nomService: "",
+      });
+      
+      setTimeout(() => {
+        onClose();
+        setSuccess(false);
+        setVisitType(null);
+      }, 1500);
+
+    } catch (err) {
+      setError(err.response?.data?.message || "Erreur lors de l'enregistrement");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!open) return null;
@@ -39,19 +120,31 @@ export default function AjoutVisite({ open, onClose, onAdd }) {
 
   const buttonBaseClass = `px-6 py-3 rounded-lg text-lg font-medium transition-all duration-300 flex-1`;
 
+  const tableHeadClass = darkMode ? "bg-gray-700 text-gray-200" : "bg-indigo-100 text-indigo-700";
+  const tableRowHoverClass = darkMode ? "hover:bg-gray-700" : "hover:bg-indigo-50";
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className={`p-8 rounded-xl shadow-lg w-96 max-w-full transition-all duration-300
+      <div className={`p-8 rounded-xl shadow-lg w-full max-w-5xl transition-all duration-300
         ${darkMode ? "bg-gray-800 text-gray-100" : "bg-white text-gray-900"}`}>
         
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">
-            {!visitType ? "Type de visite" : `Ajouter visite ${visitType === 'person' ? 'personne' : 'service'}`}
-          </h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-            <X size={24} />
-          </button>
-        </div>
+        <h2 className="text-2xl font-bold mb-6 text-center">Ajouter une visite</h2>
+
+        {error && (
+          <div className={`mb-4 p-3 rounded-md ${
+            darkMode ? "bg-red-900 text-red-100" : "bg-red-100 text-red-800"
+          }`}>
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div className={`mb-4 p-3 rounded-md ${
+            darkMode ? "bg-green-900 text-green-100" : "bg-green-100 text-green-800"
+          }`}>
+            Visite enregistrée avec succès!
+          </div>
+        )}
 
         {!visitType ? (
           <div className="space-y-4">
@@ -62,100 +155,199 @@ export default function AjoutVisite({ open, onClose, onAdd }) {
                 type="button"
                 onClick={() => setVisitType('person')}
                 className={`${buttonBaseClass} ${
-                  darkMode 
-                    ? "bg-amber-600 hover:bg-amber-700" 
-                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                  darkMode ? "bg-amber-600 hover:bg-amber-700" 
+                           : "bg-blue-600 hover:bg-blue-700 text-white"
                 }`}
               >
-                <User className="mr-2 inline" size={18} />
-                Personne
+                Visiter une personne
               </button>
               
               <button
                 type="button"
                 onClick={() => setVisitType('service')}
                 className={`${buttonBaseClass} ${
-                  darkMode 
-                    ? "bg-purple-600 hover:bg-purple-700" 
-                    : "bg-indigo-600 hover:bg-indigo-700 text-white"
+                  darkMode ? "bg-purple-600 hover:bg-purple-700" 
+                           : "bg-indigo-600 hover:bg-indigo-700 text-white"
                 }`}
               >
-                <Building className="mr-2 inline" size={18} />
-                Service
+                Visiter un service
               </button>
             </div>
+            
+            <button
+              type="button"
+              onClick={onClose}
+              className={`w-full mt-4 px-4 py-2 rounded-md ${
+                darkMode ? "bg-gray-600 hover:bg-gray-500" 
+                         : "bg-gray-300 hover:bg-gray-400"
+              }`}
+            >
+              Annuler
+            </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {visitType === 'service' ? (
-              <>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Service :</label>
-                  <select
-                    name="service"
-                    value={formData.service}
-                    onChange={handleChange}
-                    className={inputClass}
-                    required
-                  >
-                    <option value="">-- Choisir un service --</option>
-                    {services.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Motif :</label>
-                  <select
-                    name="motif"
-                    value={formData.motif}
-                    onChange={handleChange}
-                    className={inputClass}
-                    required
-                  >
-                    <option value="">-- Choisir un motif --</option>
-                    {motifs.map((m) => (
-                      <option key={m} value={m}>{m}</option>
-                    ))}
-                  </select>
-                </div>
-              </>
-            ) : (
+          <div className="flex flex-col md:flex-row gap-6">
+            <form onSubmit={handleSubmit} className="flex-1 space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Personne visitée :</label>
+                <label className="block text-sm font-medium mb-1">Nom :</label>
                 <input
-                  name="personneVisite"
-                  value={formData.personneVisite}
+                  type="text"
+                  name="nom"
+                  value={formData.nom}
                   onChange={handleChange}
                   className={inputClass}
                   required
+                  readOnly
                 />
               </div>
-            )}
 
-            <div className="flex justify-end space-x-2 mt-4">
-              <button
-                type="button"
-                onClick={() => setVisitType(null)}
-                className={`px-4 py-2 rounded-md ${
-                  darkMode ? "bg-gray-600 hover:bg-gray-500" 
-                           : "bg-gray-300 hover:bg-gray-400"
-                }`}
-              >
-                Retour
-              </button>
-              
-              <button
-                type="submit"
-                className={`px-4 py-2 rounded-md ${
-                  darkMode ? "bg-amber-500 hover:bg-amber-600" 
-                           : "bg-blue-500 hover:bg-blue-600 text-white"
-                }`}
-              >
-                Ajouter
-              </button>
-            </div>
-          </form>
+              <div>
+                <label className="block text-sm font-medium mb-1">Prénom :</label>
+                <input
+                  type="text"
+                  name="prenom"
+                  value={formData.prenom}
+                  onChange={handleChange}
+                  className={inputClass}
+                  required
+                  readOnly
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">CIN :</label>
+                <input
+                  type="text"
+                  name="cin"
+                  value={formData.cin}
+                  onChange={handleChange}
+                  className={inputClass}
+                  required
+                  readOnly
+                />
+              </div>
+
+              {visitType === 'person' ? (
+                <div>
+                  <label className="block text-sm font-medium mb-1">Personne visitée :</label>
+                  <input
+                    type="text"
+                    name="nomPersonne"
+                    value={formData.nomPersonne}
+                    onChange={handleChange}
+                    className={inputClass}
+                    required
+                    placeholder="Nom de la personne visitée"
+                  />
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Motif :</label>
+                    <input
+                      type="text"
+                      name="motif"
+                      value={formData.motif}
+                      onChange={handleChange}
+                      className={inputClass}
+                      required
+                      placeholder="Entrez le motif de la visite"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Service visité :</label>
+                    <input
+                      type="text"
+                      value={formData.nomService}
+                      className={inputClass}
+                      required
+                      placeholder="Sélectionnez un service à droite"
+                      readOnly
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="flex justify-end space-x-2 mt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setVisitType(null);
+                    setSearchService("");
+                  }}
+                  className={`px-4 py-2 rounded-md ${
+                    darkMode ? "bg-gray-600 hover:bg-gray-500" 
+                             : "bg-gray-300 hover:bg-gray-400"
+                  }`}
+                >
+                  Retour
+                </button>
+                
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className={`px-4 py-2 rounded-md ${
+                    darkMode ? "bg-amber-500 hover:bg-amber-600" 
+                             : "bg-blue-500 hover:bg-blue-600 text-white"
+                  } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                >
+                  {isLoading ? "Enregistrement..." : "Ajouter"}
+                </button>
+              </div>
+            </form>
+
+            {visitType === 'service' && (
+              <div className="flex-1">
+                <div className="mb-3">
+                  <input
+                    type="text"
+                    placeholder="Rechercher un service..."
+                    value={searchService}
+                    onChange={(e) => setSearchService(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                
+                <div className="overflow-y-auto max-h-96 border rounded-lg">
+                  <table className="w-full border-collapse">
+                    <thead className={tableHeadClass}>
+                      <tr>
+                        <th className="px-4 py-2 text-left">Service</th>
+                        <th className="px-4 py-2 text-left">Étage</th>
+                        <th className="px-4 py-2 text-left">Porte</th>
+                        <th className="px-4 py-2 text-left">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredServices.map((service) => (
+                        <tr 
+                          key={`service-${service.id_lieu}`}
+                          className={`${tableRowHoverClass} border-b ${darkMode ? "border-gray-700" : "border-gray-200"}`}
+                        >
+                          <td className="px-4 py-2">{service.nom_lieu}</td>
+                          <td className="px-4 py-2">{service.etage}</td>
+                          <td className="px-4 py-2">{service.porte}</td>
+                          <td className="px-4 py-2">
+                            <button
+                              type="button"
+                              onClick={() => handleSelectService(service.nom_lieu)}
+                              className={`px-3 py-1 rounded text-sm ${
+                                darkMode ? "bg-blue-600 hover:bg-blue-700" 
+                                         : "bg-blue-500 hover:bg-blue-600 text-white"
+                              }`}
+                            >
+                              Sélectionner
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>

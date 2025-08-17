@@ -11,14 +11,17 @@ import { AllVisiteLieuControlleur } from '../controllers/ajoutVisiteurController
 import { AllVisitePersonneControlleur } from '../controllers/ajoutVisiteurController.js';
 import { CountVisiteEncoursControlleur } from '../controllers/ajoutVisiteurController.js';
 import { CountVisiteursNowControlleur } from '../controllers/ajoutVisiteurController.js';
+import { VisitesForId } from '../controllers/ajoutVisiteurController.js';
+import { updateVisitelieuAccueil } from '../controllers/ajoutVisiteurController.js';
+import { UpdateVisitePersonneAccueil } from '../controllers/ajoutVisiteurController.js';
 
 const router = express.Router();
 
 router.post('/ajoutVisite', createVisiteController);
 router.put('/updateVisiteur', updateVisiteurControlleur);
-router.put('/visiteTermine', visiteterminerControlleur);
+router.put('/visiteTerminer/:id', visiteterminerControlleur);
 router.post('/visitePersonne', ajoutVisitePersonne);
-router.put('/visitePersonneTerminer', visitePersonneTerminerController);
+router.put('/visitePersonneTerminer/:id', visitePersonneTerminerController);
 router.put('/updateVisiteLieu', updateVisiteLieuControlleur);
 router.get('/listeVisiteur', getAllVisiteursController);
 router.get('/listeVisite', getAllVisiteLieuController);
@@ -26,6 +29,9 @@ router.get('/listeVisiteNotLieu', AllVisiteLieuControlleur);
 router.get('/listeVisiteNotPersonne', AllVisitePersonneControlleur);
 router.get('/nombreVisiteEncours', CountVisiteEncoursControlleur);
 router.get('/nombreVisiteurs', CountVisiteursNowControlleur);
+router.get('/visiteParId/:id', VisitesForId);
+router.put('/accueil/UpdateVisiteLieu/:id',updateVisitelieuAccueil );
+router.put('/accueil/UpdateVisitePersonne/:id',UpdateVisitePersonneAccueil );
 
 
 

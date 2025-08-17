@@ -1,8 +1,23 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useDarkMode } from "../utils/DarkModeContext";
+import axios from "axios";
 
 export default function VisiteListPopup({ open, onClose, visites }) {
   const { darkMode } = useDarkMode();
+  const [listeVisite , setListVisite]=useState([]);
+
+  useEffect(()=>{
+    const chargeListe= async (id)=>{
+      try{
+        const reponse= await axios.get(`http://localhost:5000/visite/visiteParId/${id}`);
+        setListVisite(reponse.data.data);
+      }
+      catch(err){
+        console.error(err);
+      }
+    }
+    chargeListe(visites.id_visiteur);
+  })
   
   if (!open) return null;
 
@@ -33,7 +48,7 @@ export default function VisiteListPopup({ open, onClose, visites }) {
         <table className={`w-full border-collapse table-auto ${textColor}`}>
           <thead className={`${tableHead} sticky top-0 z-10`}>
             <tr>
-              {["Date", "Heure d'arrivée", "Heure de sortie", "Motif", "Service visité", "Chef de service"].map((heading) => (
+              {["Date", "Heure d'arrivée", "Heure de sortie", "Motif", "Service visité"].map((heading) => (
                 <th
                   key={heading}
                   className={`px-4 py-3 border-b ${borderColor} text-left font-medium whitespace-nowrap`}
@@ -44,15 +59,14 @@ export default function VisiteListPopup({ open, onClose, visites }) {
             </tr>
           </thead>
           <tbody>
-            {visites.length > 0 ? (
-              visites.map((visite, index) => (
+            {listeVisite.length > 0 ? (
+              listeVisite.map((visite, index) => (
                 <tr key={index} className={`${tableRowHover} border-b ${borderColor}`}>
                   <td className="px-4 py-2 whitespace-nowrap">{visite.date}</td>
-                  <td className="px-4 py-2 whitespace-nowrap">{visite.heureArr}</td>
-                  <td className="px-4 py-2 whitespace-nowrap">{visite.heureSor || "-"}</td>
+                  <td className="px-4 py-2 whitespace-nowrap">{visite.heure_arrivee}</td>
+                  <td className="px-4 py-2 whitespace-nowrap">{visite.heure_depart || "-"}</td>
                   <td className="px-4 py-2 whitespace-nowrap">{visite.motif}</td>
-                  <td className="px-4 py-2 whitespace-nowrap">{visite.service}</td>
-                  <td className="px-4 py-2 whitespace-nowrap">{visite.chefService}</td>
+                  <td className="px-4 py-2 whitespace-nowrap">{visite.nom_lieu}</td>
                 </tr>
               ))
             ) : (

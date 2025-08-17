@@ -36,6 +36,21 @@ export async function updateVisitelieu(idVisite,motif, idLieu) {
     return result.rows[0];
 }
 
+export async function updateVisitePersonne(idVisite,motif, idLieu) {
+    const result=await pool.query("UPDATE visites_lieu SET motif = $1,  id_lieu=$2  WHERE id_visitelieu = $3 RETURNING *",[motif,idLieu,idVisite]);
+    return result.rows[0];
+}
+
+export async function updateVisitelieuNom(idVisite, idLieu) {
+    const result=await pool.query("UPDATE visites_lieu SET  id_lieu=$1  WHERE id_visitelieu = $2 RETURNING *",[idLieu,idVisite]);
+    return result.rows[0];
+}
+
+export async function updateVisitePersonneNom(idVisite, idPersonne) {
+    const result=await pool.query("UPDATE visites_personne SET  id_agent=$1  WHERE id_visitepersonne = $2 RETURNING *",[idPersonne,idVisite]);
+    return result.rows[0];
+}
+
 
 
 export async function createVisitePersonne(idVisiteur,idPresonne ) {  // Ajout du paramètre motif
@@ -54,11 +69,17 @@ export async function  findPersonneId(nomPersonne) {
     return result.rows[0];
 }
 
-export async function createPersonne(nomPersonne) {
-    const result = await pool.query(
-        "INSERT INTO agent(nom_agent) VALUES($1)",[nomPersonne]
-    );
-    return result.rows[0];
+export async function createPersonne(nom) {
+    try {
+      const result = await pool.query(
+        'INSERT INTO agent (nom_agent) VALUES ($1) RETURNING id_agent',
+        [nom]
+      );
+      return result.rows[0];
+    } catch (err) {
+      console.error('Erreur création personne:', err);
+      throw new Error('Échec de la création de la personne visitée');
+    }
 }
 
 export async function visitePersonneTerminer(idVisite) {
@@ -74,6 +95,14 @@ export async function updateVisiteur(id, nom, prenom, cin) {
     );
     return result.rows[0];
 }
+export async function updateVisiteurWithoutCin(id, nom, prenom) {
+    const result= await pool.query(
+        " UPDATE visiteurs SET nom =$1 , prenom =$2 WHERE id_Visiteur= $3 RETURNING *",[nom,prenom,id]
+    );
+    return result.rows[0];
+}
+
+
 
 export async function SelectAllVisiteur() {
     const result= await pool.query(
@@ -94,14 +123,14 @@ export async function SelectAllVisite() {
 
 export async function SelectAllVisiteNotLieu() {
     const  result= await pool.query(
-        "SELECT vis.id_visitelieu , v.nom , v.prenom ,l.nom_lieu , vis.heure_arrivee, FROM visites_lieu vis JOIN visiteurs v ON v.id_visiteur=vis.id_visiteur JOIN lieu l ON l.id_lieu=vis.id_lieu WHERE vis.statut='en cours'  ORDER BY vis.date DESC, vis.heure_arrivee DESC;"
+        "SELECT vis.id_visitelieu , v.nom , v.prenom ,l.nom_lieu , vis.heure_arrivee FROM visites_lieu vis JOIN visiteurs v ON v.id_visiteur=vis.id_visiteur JOIN lieu l ON l.id_lieu=vis.id_lieu WHERE vis.statut='en cours'  ORDER BY vis.date DESC, vis.heure_arrivee DESC;"
     );
     return result.rows;
 }
 
 export async function SelectAllVisiteNotPersonne() {
     const result= await pool.query(
-        "SELECT vis.id_visitepersonne , v.nom , v.prenom ,a.nom_agent , vis.heure_arrivee FROM visites_personne vis JOIN visiteurs v ON v.id_visiteur=vis.id_visiteur JOIN agent a ON a.id_agent=vis.id_agent WHERE vis.statut='en cours'  ORDER BY vis.date DESC, vis.heure_arrivee DESC;"
+        "SELECT vis.id_visitepersonne , v.nom , v.prenom , a.nom_agent , vis.heure_arrivee, a.nom_agent FROM visites_personne vis JOIN visiteurs v ON v.id_visiteur=vis.id_visiteur JOIN agent a ON a.id_agent=vis.id_agent WHERE vis.statut='en cours'  ORDER BY vis.date_p DESC, vis.heure_arrivee DESC;"
     );
     return result.rows;
 }
@@ -136,7 +165,28 @@ export async function CountVisiteurLieuNow() {
 
 export async function CountVisiteurPersonneNow() {
     const result= await pool.query(
-        "SELECT COUNT(DISTINCT id_visiteur) FROM visites_personne WHERE date=CURRENT_DATE"
+        "SELECT COUNT(DISTINCT id_visiteur) FROM visites_personne WHERE date_p=CURRENT_DATE"
     );
     return parseInt(result.rows[0].count, 10);
 }
+
+export async function  selectAllVisiteForId(idPresonne) {
+    const result= await pool.query(
+        "SELECT vis.date, vis.heure_arrivee, vis.heure_depart , vis.motif, l.nom_lieu FROM visites_lieu vis JOIN lieu l ON l.id_lieu=vis.id_lieu WHERE id_visiteur=$1",[idPresonne]
+    );
+    return result.rows;
+}
+export async function  selectIdVisiteur(idVisite) {
+    const result= await pool.query(
+        "SELECT id_visiteur FROM visites_lieu WHERE id_visitelieu=$1",[idVisite]
+    );
+    return result.rows[0];
+}
+
+export async function  selectIdVisiteurForVisitePersonne(idVisite) {
+    const result= await pool.query(
+        "SELECT id_visiteur FROM visites_personne WHERE id_visitepersonne=$1",[idVisite]
+    );
+    return result.rows[0];
+}
+

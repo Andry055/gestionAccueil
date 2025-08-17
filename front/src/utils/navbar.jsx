@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Menu, X, LogOut } from "lucide-react";
 import { useDarkMode } from "./DarkModeContext";
-import { useAuth } from "../AuthContext";
+import { useAuth } from "../AuthContext";// Assurez-vous que le chemin est correct
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -14,6 +14,9 @@ export default function Navbar() {
     logout();
     navigate("/");
   };
+
+  // Debug: affiche les données utilisateur dans la console
+  console.log("Current user:", user);
 
   const navBg = darkMode ? "bg-gray-900 text-white" : "bg-blue-300 text-gray-900";
   const linkActive = darkMode
@@ -74,16 +77,20 @@ export default function Navbar() {
           </button>
 
           {/* Profil + déconnexion */}
-          <div
-            className={`flex items-center ml-4 rounded-lg p-2 ${
-              darkMode ? "bg-gray-700" : "bg-gray-800"
-            }`}
-          >
-            <p className="text-gray-100 px-3">{user?.username || "Utilisateur"}</p>
-            <button onClick={handleLogout} className="p-1 rounded hover:bg-amber-500 transition-colors">
-              <LogOut className="w-5 text-white" />
-            </button>
-          </div>
+          {user ? (
+            <div
+              className={`flex items-center ml-4 rounded-lg p-2 ${
+                darkMode ? "bg-gray-700" : "bg-gray-800"
+              }`}
+            >
+              <p className="text-gray-100 px-3">{user.username}</p>
+              <button onClick={handleLogout} className="p-1 rounded hover:bg-amber-500 transition-colors">
+                <LogOut className="w-5 text-white" />
+              </button>
+            </div>
+          ) : (
+            <div className="ml-4 text-gray-100">Non connecté</div>
+          )}
         </ul>
       </div>
 
@@ -123,16 +130,20 @@ export default function Navbar() {
             {darkMode ? "☀️ Mode clair" : "🌙 Mode sombre"}
           </button>
 
-          <div
-            className={`flex items-center justify-between px-3 py-2 rounded-lg ${
-              darkMode ? "bg-gray-700" : "bg-gray-800"
-            }`}
-          >
-            <p className="text-gray-100">{user?.username || "Utilisateur"}</p>
-            <button onClick={handleLogout} className="p-1 rounded hover:bg-amber-500 transition-colors">
-              <LogOut className="w-5 text-white" />
-            </button>
-          </div>
+          {user ? (
+            <div
+              className={`flex items-center justify-between px-3 py-2 rounded-lg ${
+                darkMode ? "bg-gray-700" : "bg-gray-800"
+              }`}
+            >
+              <p className="text-gray-100">{user.username}</p>
+              <button onClick={handleLogout} className="p-1 rounded hover:bg-amber-500 transition-colors">
+                <LogOut className="w-5 text-white" />
+              </button>
+            </div>
+          ) : (
+            <div className="px-3 py-2 text-gray-100">Non connecté</div>
+          )}
         </div>
       </div>
     </nav>

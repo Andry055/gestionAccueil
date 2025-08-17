@@ -1,59 +1,82 @@
-import React, { useState, useEffect } from "react";
-import Navbar from "../utils/navbar";
+import React, { useState, useEffect, useMemo } from "react";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import { useDarkMode } from "../utils/DarkModeContext";
-
-// Données exemples
-const utilisateursInitiaux = [
-  { id: 1, nom: "Andry", prenom: "Nirina" },
-  { id: 2, nom: "Mialy", prenom: "Lionnel" },
-  { id: 3, nom: "Feno", prenom: "Grey" },
-];
-
-const visitesInit = [
-  { id: 1, utilisateurId: 1, date: "2025-07-10", heureArr: "8:55", heureSor: "10:55", service: "DRFP", motif: "Réunion" },
-  { id: 2, utilisateurId: 2, date: "2025-07-12", heureArr: "9:00", heureSor: "10:50", service: "DTFP", motif: "Dépôt de dossier" },
-  { id: 3, utilisateurId: 3, date: "2025-07-15", heureArr: "10:20", heureSor: "11:55", service: "DRFP", motif: "Entretien" },
-];
+import axios from "axios";
 
 export default function Visite() {
   const { darkMode } = useDarkMode();
 
-  const [utilisateurs] = useState(utilisateursInitiaux);
-  const [visites] = useState(visitesInit);
-  const [filteredVisites, setFilteredVisites] = useState(visites);
-
-  // Filtres
+  // États
   const [search, setSearch] = useState("");
   const [dateDebut, setDateDebut] = useState("");
+  const [visites, setVisites] = useState([]);
+  const [chargement, setChargement] = useState(true);
+  const [erreur, setErreur] = useState(null);
+
+  // Formatage des dates et heures
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0].replace(/-/g, '/'); // Format YYYY/MM/DD
+  };
+
+  const formatHeure = (heureString) => {
+    if (!heureString) return "-";
+    const [hours, minutes] = heureString.split(':');
+    return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`; // Format HH:MM
+  };
+
+  // Chargement des données
+  useEffect(() => {
+    const chargeVisites = async () => {
+      setChargement(true);
+      try {
+        const reponse = await axios.get(`http://localhost:5000/visite/listeVisite`);
+        
+        if (reponse.data && reponse.data.data && Array.isArray(reponse.data.data)) {
+          setVisites(reponse.data.data);
+          setErreur(null);
+        } else {
+          throw new Error("Format de données inattendu");
+        }
+      } catch (err) {
+        console.error("Erreur API:", err);
+        setErreur(err.response?.data?.error || err.message || "Erreur serveur");
+        setVisites([]);
+      } finally {
+        setChargement(false);
+      }
+    };
+
+    chargeVisites();
+  }, []);
+
+  // Filtrage des visites
+  const filteredVisites = useMemo(() => {
+    return visites.filter(v => {
+      // Filtre par recherche textuelle
+      const matchesSearch = 
+        search === "" ||
+        (v.nom && v.nom.toLowerCase().includes(search.toLowerCase())) ||
+        (v.prenom && v.prenom.toLowerCase().includes(search.toLowerCase())) ||
+        (v.nom_lieu && v.nom_lieu.toLowerCase().includes(search.toLowerCase())) ||
+        (v.motif && v.motif.toLowerCase().includes(search.toLowerCase()));
+
+      // Filtre par date
+      const matchesDate = 
+        dateDebut === "" || 
+        (v.date && new Date(v.date) >= new Date(dateDebut));
+
+      return matchesSearch && matchesDate;
+    });
+  }, [visites, search, dateDebut]);
 
   // Style
   const bgMain = darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900";
-  const cardBg = darkMode ? "bg-gray-800 text-gray-100" : " text-gray-700";
+  const cardBg = darkMode ? "bg-gray-800 text-gray-100" : "bg-white text-gray-700";
   const tableHead = darkMode ? "bg-gray-700 text-gray-200" : "bg-indigo-100 text-indigo-700";
   const tableRowHover = darkMode ? "hover:bg-gray-700" : "hover:bg-indigo-50";
-
-  // Filtrage dynamique
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setFilteredVisites(
-        visites.filter((v) => {
-          const user = utilisateurs.find((u) => u.id === v.utilisateurId);
-          const nomPrenom = `${user?.nom ?? ""} ${user?.prenom ?? ""}`.toLowerCase();
-          const dateValide = dateDebut === "" || v.date >= dateDebut;
-
-          return (
-            dateValide &&
-            (nomPrenom.includes(search.toLowerCase()) ||
-              v.service.toLowerCase().includes(search.toLowerCase()) ||
-              v.motif.toLowerCase().includes(search.toLowerCase()))
-          );
-        })
-      );
-    }, 400);
-
-    return () => clearTimeout(timer);
-  }, [search, dateDebut, visites, utilisateurs]);
+  const tableBorder = darkMode ? "border-gray-600" : "border-gray-200";
 
   // Reset
   const handleReset = () => {
@@ -68,7 +91,7 @@ export default function Visite() {
       <div className="max-w-7xl px-8 mx-auto pb-10">
         {/* Filtres */}
         <div className={`rounded-xl md:p-6 p-4 mb-5 ${cardBg}`}>
-          <div className="flex flex-col md:flex-row gap-4  items-center">
+          <div className="flex flex-col md:flex-row gap-4 items-center">
             {/* Recherche */}
             <input
               type="text"
@@ -90,6 +113,17 @@ export default function Visite() {
               }`}
             />
 
+            {/* Bouton Reset */}
+            <button
+              onClick={handleReset}
+              className={`w-full md:w-auto px-4 py-2 rounded-md border ${
+                darkMode 
+                  ? "bg-gray-700 border-gray-600 hover:bg-gray-600" 
+                  : "bg-white border-gray-300 hover:bg-gray-100"
+              }`}
+            >
+              Réinitialiser
+            </button>
           </div>
         </div>
 
@@ -105,52 +139,60 @@ export default function Visite() {
             </div>
           </div>
 
-          <table className="w-full min-w-[800px] border-collapse table-auto">
-            <thead className={`${tableHead} sticky top-0 z-10`}>
-              <tr>
-                {["ID", "Nom", "Prénom", "Date", "Heure Arrivée", "Heure Sortie", "Service", "Motif", "Modifier"].map(
-                  (heading) => (
-                    <th
-                      key={heading}
-                      className="px-6 py-3 border-b border-gray-300 text-left font-medium whitespace-nowrap"
-                    >
-                      {heading}
-                    </th>
-                  )
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {filteredVisites.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="text-center py-10 text-gray-500">
-                    Aucune visite trouvée.
-                  </td>
-                </tr>
-              ) : (
-                filteredVisites.map((v) => {
-                  const user = utilisateurs.find((u) => u.id === v.utilisateurId) || {};
-                  return (
-                    <tr key={v.id} className={`${tableRowHover} transition-colors`}>
-                      <td className="px-6 py-4 border-b">{v.id}</td>
-                      <td className="px-6 py-4 border-b">{user.nom || "-"}</td>
-                      <td className="px-6 py-4 border-b">{user.prenom || "-"}</td>
-                      <td className="px-6 py-4 border-b">{v.date}</td>
-                      <td className="px-6 py-4 border-b">{v.heureArr}</td>
-                      <td className="px-6 py-4 border-b">{v.heureSor}</td>
-                      <td className="px-6 py-4 border-b">{v.service}</td>
-                      <td className="px-6 py-4 border-b">{v.motif}</td>
-                      <td className="px-6 py-1 border-b whitespace-nowrap">
-                        <div className="grid place-items-center bg-blue-600 rounded-2xl w-12 h-12">
-                          <PencilSquareIcon className="w-7 text-white" />
-                        </div>
+          {chargement ? (
+            <div className="text-center py-10">Chargement en cours...</div>
+          ) : erreur ? (
+            <div className="text-center py-10 text-red-500">{erreur}</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead className={`${tableHead} sticky top-0 z-10`}>
+                  <tr>
+                    {["ID", "Nom", "Prénom", "Date", "Heure Arrivée", "Heure Sortie", "Service", "Motif", "Actions"].map(
+                      (heading) => (
+                        <th
+                          key={heading}
+                          className={`px-4 py-3 text-left font-medium whitespace-nowrap border-b ${tableBorder}`}
+                        >
+                          {heading}
+                        </th>
+                      )
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredVisites.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="text-center py-10 text-gray-500">
+                        Aucune visite trouvée.
                       </td>
                     </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                  ) : (
+                    filteredVisites.map((v) => (
+                      <tr 
+                        key={v.id_visitelieu} 
+                        className={`${tableRowHover} transition-colors border-b ${tableBorder}`}
+                      >
+                        <td className="px-4 py-3">{v.id_visitelieu}</td>
+                        <td className="px-4 py-3 font-medium">{v.nom || "-"}</td>
+                        <td className="px-4 py-3">{v.prenom || "-"}</td>
+                        <td className="px-4 py-3 whitespace-nowrap">{formatDate(v.date)}</td>
+                        <td className="px-4 py-3 whitespace-nowrap">{formatHeure(v.heure_arrivee)}</td>
+                        <td className="px-4 py-3 whitespace-nowrap">{formatHeure(v.heure_depart) || "-"}</td>
+                        <td className="px-4 py-3">{v.nom_lieu}</td>
+                        <td className="px-4 py-3">{v.motif}</td>
+                        <td className="px-4 py-3">
+                          <button className="p-2 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors">
+                            <PencilSquareIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
       </div>
     </div>

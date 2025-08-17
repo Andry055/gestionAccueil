@@ -1,38 +1,46 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDarkMode } from "../utils/DarkModeContext";
+import { useAuth } from "../AuthContext";
+import axios from "axios";
 
 export default function AjoutVisiteur({ open, onClose }) {
   const { darkMode } = useDarkMode();
+  const { user } = useAuth();
   const [visitType, setVisitType] = useState(null);
   const [searchService, setSearchService] = useState("");
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     nom: "",
     prenom: "",
     cin: "",
-    personneVisite: "",
+    nomAgent: user?.username || 'Système',
+    nomPersonne: "",
     motif: "",
-    service: "",
+    nomService: "",
   });
 
-  const motifs = ["Réunion", "Entretien", "Dépôt de dossier", "Visite amicale", "Autre"];
-  
-  const servicesList = [
-    { id: 1, nom: "DRFP", etage: "1", porte: "101" },
-    { id: 2, nom: "DAFP", etage: "1", porte: "102" },
-    { id: 3, nom: "DTFP", etage: "2", porte: "201" },
-    { id: 4, nom: "DCR", etage: "3", porte: "301" },
-    { id: 5, nom: "DG", etage: "4", porte: "401" },
-    { id: 6, nom: "DAG", etage: "4", porte: "402" },
-    { id: 7, nom: "Archive", etage: "5", porte: "501" }
-  ];
+  const [servicesList, setServicesList] = useState([]);
 
-  // Filtrer les services selon la recherche
+
+  useEffect(() => {
+    const chargerServices = async () => {
+      try {
+        const response = await axios.get(`http://localhost:5000/service/listeService`);
+        setServicesList(response.data.data || []);
+      } catch (err) {
+        console.error("Erreur chargement services:", err);
+        setServicesList([]);
+      }
+    };
+    chargerServices();
+  }, []);
+
   const filteredServices = servicesList.filter(service =>
-    service.nom.toLowerCase().includes(searchService.toLowerCase())
+    service?.nom_lieu?.toLowerCase()?.includes(searchService.toLowerCase().trim())
   );
-
-  const personnes = ["Mr. Rakoto", "Mme. Rasoa", "Mr. Randria", "Mme. Nirina", "Mr. Jean"];
 
   const handleChange = (e) => {
     setFormData({
@@ -44,24 +52,53 @@ export default function AjoutVisiteur({ open, onClose }) {
   const handleSelectService = (serviceName) => {
     setFormData({
       ...formData,
-      service: serviceName
+      nomService: serviceName
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Données envoyées :", { ...formData, visitType });
-    setFormData({ 
-      nom: "", 
-      prenom: "", 
-      cin: "", 
-      personneVisite: "", 
-      motif: "", 
-      service: "" 
-    });
-    setVisitType(null);
-    setSearchService("");
-    onClose();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const endpoint = formData.personneVisite 
+        ? "http://localhost:5000/visite/visitePersonne" 
+        : "http://localhost:5000/visite/ajoutVisite";
+
+      const completeData = {
+        ...formData
+      };
+
+      console.log("Visite Persone ",completeData);
+      const response = await axios.post(endpoint, completeData, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      setSuccess(true);
+      setFormData({
+        nom: "",
+        prenom: "",
+        cin: "",
+        nomAgent: user?.username || 'Système',
+        personneVisite: "",
+        motif: "",
+        nomService: "",
+      });
+      
+      setTimeout(() => {
+        onClose(response.data); // Ferme le modal après succès
+        setSuccess(false); // Réinitialise l'état de succès
+      }, 1500);
+
+    } catch (err) {
+      setError(err.response?.data?.message || "Erreur lors de l'enregistrement");
+    } finally {
+      setIsLoading(false);
+    }
+    
   };
 
   if (!open) return null;
@@ -80,7 +117,23 @@ export default function AjoutVisiteur({ open, onClose }) {
       <div className={`p-8 rounded-xl shadow-lg w-full max-w-5xl transition-all duration-300
         ${darkMode ? "bg-gray-800 text-gray-100" : "bg-white text-gray-900"}`}>
         
-        <h2 className="text-2xl font-bold mb-6 text-center">Ajouter Visiteur</h2>
+        <h2 className="text-2xl font-bold mb-6 text-center">Ajouter un visiteur</h2>
+
+        {error && (
+          <div className={`mb-4 p-3 rounded-md ${
+            darkMode ? "bg-red-900 text-red-100" : "bg-red-100 text-red-800"
+          }`}>
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div className={`mb-4 p-3 rounded-md ${
+            darkMode ? "bg-green-900 text-green-100" : "bg-green-100 text-green-800"
+          }`}>
+            Visite enregistrée avec succès!
+          </div>
+        )}
 
         {!visitType ? (
           <div className="space-y-4">
@@ -91,9 +144,8 @@ export default function AjoutVisiteur({ open, onClose }) {
                 type="button"
                 onClick={() => setVisitType('person')}
                 className={`${buttonBaseClass} ${
-                  darkMode 
-                    ? "bg-amber-600 hover:bg-amber-700" 
-                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                  darkMode ? "bg-amber-600 hover:bg-amber-700" 
+                           : "bg-blue-600 hover:bg-blue-700 text-white"
                 }`}
               >
                 Visiter une personne
@@ -103,9 +155,8 @@ export default function AjoutVisiteur({ open, onClose }) {
                 type="button"
                 onClick={() => setVisitType('service')}
                 className={`${buttonBaseClass} ${
-                  darkMode 
-                    ? "bg-purple-600 hover:bg-purple-700" 
-                    : "bg-indigo-600 hover:bg-indigo-700 text-white"
+                  darkMode ? "bg-purple-600 hover:bg-purple-700" 
+                           : "bg-indigo-600 hover:bg-indigo-700 text-white"
                 }`}
               >
                 Visiter un service
@@ -116,9 +167,8 @@ export default function AjoutVisiteur({ open, onClose }) {
               type="button"
               onClick={onClose}
               className={`w-full mt-4 px-4 py-2 rounded-md ${
-                darkMode 
-                  ? "bg-gray-600 hover:bg-gray-500" 
-                  : "bg-gray-300 hover:bg-gray-400"
+                darkMode ? "bg-gray-600 hover:bg-gray-500" 
+                         : "bg-gray-300 hover:bg-gray-400"
               }`}
             >
               Annuler
@@ -126,7 +176,6 @@ export default function AjoutVisiteur({ open, onClose }) {
           </div>
         ) : (
           <div className="flex flex-col md:flex-row gap-6">
-            {/* Formulaire (version originale) */}
             <form onSubmit={handleSubmit} className="flex-1 space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Nom :</label>
@@ -179,18 +228,15 @@ export default function AjoutVisiteur({ open, onClose }) {
                 <>
                   <div>
                     <label className="block text-sm font-medium mb-1">Motif :</label>
-                    <select
+                    <input
+                      type="text"
                       name="motif"
                       value={formData.motif}
                       onChange={handleChange}
                       className={inputClass}
                       required
-                    >
-                      <option value="">-- Choisir un motif --</option>
-                      {motifs.map((m) => (
-                        <option key={m} value={m}>{m}</option>
-                      ))}
-                    </select>
+                      placeholder="Entrez le motif de la visite"
+                    />
                   </div>
 
                   <div>
@@ -198,7 +244,7 @@ export default function AjoutVisiteur({ open, onClose }) {
                     <input
                       type="text"
                       name="service"
-                      value={formData.service}
+                      value={formData.nomService}
                       onChange={handleChange}
                       className={inputClass}
                       required
@@ -226,17 +272,17 @@ export default function AjoutVisiteur({ open, onClose }) {
                 
                 <button
                   type="submit"
+                  disabled={isLoading}
                   className={`px-4 py-2 rounded-md ${
                     darkMode ? "bg-amber-500 hover:bg-amber-600" 
                              : "bg-blue-500 hover:bg-blue-600 text-white"
-                  }`}
+                  } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
-                  Ajouter
+                  {isLoading ? "Enregistrement..." : "Ajouter"}
                 </button>
               </div>
             </form>
 
-            {/* Tableau des services avec recherche */}
             {visitType === 'service' && (
               <div className="flex-1">
                 <div className="mb-3">
@@ -245,11 +291,7 @@ export default function AjoutVisiteur({ open, onClose }) {
                     placeholder="Rechercher un service..."
                     value={searchService}
                     onChange={(e) => setSearchService(e.target.value)}
-                    className={`w-full p-2 border rounded-md mb-2 focus:outline-none focus:ring-2 ${
-                      darkMode 
-                        ? "bg-gray-700 border-gray-600 text-white focus:ring-amber-400" 
-                        : "bg-white border-gray-300 text-gray-900 focus:ring-blue-400"
-                    }`}
+                    className={inputClass}
                   />
                 </div>
                 
@@ -264,37 +306,28 @@ export default function AjoutVisiteur({ open, onClose }) {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredServices.length > 0 ? (
-                        filteredServices.map((service) => (
-                          <tr 
-                            key={service.id} 
-                            className={`${tableRowHoverClass} border-b ${darkMode ? "border-gray-700" : "border-gray-200"}`}
-                          >
-                            <td className="px-4 py-2">{service.nom}</td>
-                            <td className="px-4 py-2">{service.etage}</td>
-                            <td className="px-4 py-2">{service.porte}</td>
-                            <td className="px-4 py-2">
-                              <button
-                                type="button"
-                                onClick={() => handleSelectService(service.nom)}
-                                className={`px-3 py-1 rounded text-sm ${
-                                  darkMode 
-                                    ? "bg-blue-600 hover:bg-blue-700" 
-                                    : "bg-blue-500 hover:bg-blue-600 text-white"
-                                }`}
-                              >
-                                Sélectionner
-                              </button>
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={4} className="text-center py-4 text-gray-500">
-                            Aucun service trouvé
+                      {filteredServices.map((service) => (
+                        <tr 
+                          key={`service-${service.id_lieu}`}
+                          className={`${tableRowHoverClass} border-b ${darkMode ? "border-gray-700" : "border-gray-200"}`}
+                        >
+                          <td className="px-4 py-2">{service.nom_lieu}</td>
+                          <td className="px-4 py-2">{service.etage}</td>
+                          <td className="px-4 py-2">{service.porte}</td>
+                          <td className="px-4 py-2">
+                            <button
+                              type="button"
+                              onClick={() => handleSelectService(service.nom_lieu)}
+                              className={`px-3 py-1 rounded text-sm ${
+                                darkMode ? "bg-blue-600 hover:bg-blue-700" 
+                                         : "bg-blue-500 hover:bg-blue-600 text-white"
+                              }`}
+                            >
+                              Sélectionner
+                            </button>
                           </td>
                         </tr>
-                      )}
+                      ))}
                     </tbody>
                   </table>
                 </div>

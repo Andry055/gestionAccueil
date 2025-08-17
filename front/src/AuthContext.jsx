@@ -15,6 +15,7 @@ export function AuthProvider({ children }) {
     const userData = { username, role, token };
     localStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
+    console.log("Current user log:", userData);
   };
 
   const logout = () => {

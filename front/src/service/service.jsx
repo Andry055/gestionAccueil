@@ -1,24 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useMemo } from "react";
 import { Eye, Edit2, RotateCcw, UserPlus2 } from "lucide-react";
 import AjoutService from "../superAdmin/ajoutService";
 import { useDarkMode } from "../utils/DarkModeContext";
+import axios from "axios";
 
 export default function Service() {
   const { darkMode } = useDarkMode();
   const [openAjout, setOpenAjout] = useState(false);
   
-  const services = [
-    { id: 1, nom: "Avancement", porte: 6, etage: "2", visites: 120 },
-    { id: 2, nom: "Reclassement", porte: 201, etage: "2", visites: 90 },
-    { id: 3, nom: "Bonification", porte: 100, etage: "1", visites: 150 },
-    { id: 4, nom: "Integration", porte: 50, etage: "3", visites: 80 },
-    { id: 5, nom: "Nomination", porte: 75, etage: "3", visites: 60 },
-    { id: 6, nom: "Archive", porte: 85, etage: "3", visites: 130 },
-    { id: 7, nom: "DAG", porte: 15, etage: "4", visites: 110 },
-    { id: 8, nom: "DG", porte: 5, etage: "2", visites: 140 },
-    { id: 9, nom: "Cabinet", porte: 1, etage: "2", visites: 50 },
-    { id: 10, nom: "DCR", porte: 45, etage: "6", visites: 70 },
-  ];
+  const [services,  setService]=useState([]);
+
+
 
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState({ 
@@ -35,19 +27,38 @@ export default function Service() {
   });
 
   useEffect(() => {
+    const chargerServices = async () => {
+      try {
+        const reponse = await axios.get(`http://localhost:5000/service/listeService`);
+        if (reponse.data && reponse.data.data && Array.isArray(reponse.data.data)) {
+          setService(reponse.data.data);
+        } else {
+          throw new Error("Format de données inattendu");
+        }
+      } catch (err) {
+        console.error("Erreur chargement services:", err);
+        setService([]);
+      }
+    };
+    chargerServices();
+  }, []);
+
+  useEffect(() => {
     const timer = setTimeout(() => setFilters(searchValues), 500);
     return () => clearTimeout(timer);
   }, [searchValues]);
 
-  const filteredServices = services.filter((service) => {
-    return (
-      service.nom.toLowerCase().includes(search.toLowerCase()) &&
-      (filters.id === "" || service.id === Number(filters.id)) &&
-      (filters.nom === "" || service.nom.toLowerCase().includes(filters.nom.toLowerCase())) &&
-      (filters.porte === "" || service.porte === Number(filters.porte)) &&
-      (filters.etage === "" || service.etage.includes(filters.etage))
-    );
-  });
+const filteredServices = useMemo(() => {
+    console.log("Liste :", services);
+    return services.filter(service => {
+      return (
+        (filters.id === "" || String(service.id_lieu).includes(filters.id)) &&
+        (filters.nom === "" || service.nom_lieu.toLowerCase().includes(filters.nom.toLowerCase())) &&
+        (filters.porte === "" || String(service.porte).includes(filters.porte)) &&
+        (filters.etage === "" || String(service.etage).includes(filters.etage))
+      );
+    });
+  }, [services, filters]);
 
   const handleChange = (e) => {
     setSearchValues({ ...searchValues, [e.target.name]: e.target.value });
@@ -196,8 +207,8 @@ export default function Service() {
                       key={service.id}
                       className={`${tableRowHover} transition-colors cursor-pointer`}
                     >
-                      <td className="px-6 py-4 border-b whitespace-nowrap">{service.id}</td>
-                      <td className="px-6 py-4 border-b whitespace-nowrap">{service.nom}</td>
+                      <td className="px-6 py-4 border-b whitespace-nowrap">{service.id_lieu}</td>
+                      <td className="px-6 py-4 border-b whitespace-nowrap">{service.nom_lieu}</td>
                       <td className="px-6 py-4 border-b whitespace-nowrap">{service.porte}</td>
                       <td className="px-6 py-4 border-b whitespace-nowrap">{service.etage}</td>
                       <td className="px-6 py-1 border-b whitespace-nowrap">

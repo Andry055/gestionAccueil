@@ -39,8 +39,9 @@ export async function DeleteServiceController(req, res) {
 
 export async function SelectAllServiceControlleur(req, res) {
     try{
-        let lieu= await SelectAllService();
-        res.status(200).json({message:"Liste des Lieux", lieu});
+        let lieux= await SelectAllService();
+        res.status(200).json({message:"Liste des Lieux",
+             data: lieux});
 
     }
     catch(err){
