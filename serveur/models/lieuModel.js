@@ -32,3 +32,22 @@ export async function CountVisiteurService() {
     );
     return result.rows;
 }
+
+export async function selectAllVisiteurService(id) {
+    const result = await pool.query("SELECT v.nom, v.prenom, v.cin, vis.motif FROM visites_lieu vis JOIN visiteurs v ON v.id_visiteur=vis.id_visiteur JOIN lieu l ON l.id_lieu=vis.id_lieu WHERE vis.id_lieu=$1;",[id]
+    );
+    return result.rows;
+}
+
+export async function getTopServices() {
+    const result = await pool.query(`
+        SELECT l.nom_lieu as nom_lieu, COUNT(vis.id_visitelieu) as visites 
+        FROM visites_lieu vis 
+        JOIN lieu l ON l.id_lieu = vis.id_lieu 
+        GROUP BY l.nom_lieu 
+        ORDER BY visites DESC
+        LIMIT 10
+    `);
+    return result.rows;
+}
+

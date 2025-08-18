@@ -3,12 +3,14 @@ import { Eye, Edit2, RotateCcw, UserPlus2 } from "lucide-react";
 import AjoutService from "../superAdmin/ajoutService";
 import { useDarkMode } from "../utils/DarkModeContext";
 import axios from "axios";
+import ListeService from "./listeService";
 
 export default function Service() {
   const { darkMode } = useDarkMode();
   const [openAjout, setOpenAjout] = useState(false);
   
   const [services,  setService]=useState([]);
+  const [selectedServiceId, setSelectedServiceId] = useState(null);
 
 
 
@@ -212,9 +214,10 @@ const filteredServices = useMemo(() => {
                       <td className="px-6 py-4 border-b whitespace-nowrap">{service.porte}</td>
                       <td className="px-6 py-4 border-b whitespace-nowrap">{service.etage}</td>
                       <td className="px-6 py-1 border-b whitespace-nowrap">
-                        <button
+                      <button
+                          onClick={() => setSelectedServiceId(service.id_lieu)}
                           className={`inline-flex items-center justify-center px-3 py-1 rounded-full border transition duration-300 ${buttonVariants.yellow}`}
-                          aria-label={`Voir ${service.nom}`}
+                          aria-label={`Voir ${service.nom_lieu}`}
                         >
                           <Eye className="w-5 h-5" />
                         </button>
@@ -237,6 +240,12 @@ const filteredServices = useMemo(() => {
       </div>
 
       <AjoutService open={openAjout} onClose={() => setOpenAjout(false)} />
+      {selectedServiceId && (
+          <ListeService 
+            serviceId={selectedServiceId} 
+            onClose={() => setSelectedServiceId(null)} 
+          />
+        )}
     </div>
   );
 }

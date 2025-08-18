@@ -1,4 +1,4 @@
-import { findVisitorCin, createVisiteur, createVisiteService, findServiceId, findPersonneId, updateVisiteur, updateVisitelieu, SelectAllVisiteur, SelectAllVisite, SelectAllVisiteNotLieu, SelectAllVisiteNotPersonne, countVisiteEncours, countVisitePersonneEncours, CountVisiteurLieuNow, CountVisiteurPersonneNow, selectAllVisiteForId, selectIdVisiteur, updateVisiteurWithoutCin, updateVisitelieuNom, selectIdVisiteurForVisitePersonne, updateVisitePersonne, updateVisitePersonneNom } from "../models/visiteModel.js";
+import { findVisitorCin, createVisiteur, createVisiteService, findServiceId, findPersonneId, updateVisiteur, updateVisitelieu, SelectAllVisiteur, SelectAllVisite, SelectAllVisiteNotLieu, SelectAllVisiteNotPersonne, countVisiteEncours, countVisitePersonneEncours, CountVisiteurLieuNow, CountVisiteurPersonneNow, selectAllVisiteForId, selectIdVisiteur, updateVisiteurWithoutCin, updateVisitelieuNom, selectIdVisiteurForVisitePersonne, updateVisitePersonne, updateVisitePersonneNom, chartMois, chartSemaine } from "../models/visiteModel.js";
 import { visiteTerminer, createPersonne , createVisitePersonne , visitePersonneTerminer} from "../models/visiteModel.js";
 
 export async function createVisiteController(req, res) {
@@ -36,9 +36,10 @@ export async function createVisiteController(req, res) {
 
 
 export async function updateVisiteurControlleur(req, res) {
-    const {idVisite,nom, prenom, cin} = req.body;
+    const {id} = req.params;
+    const {nom, prenom, cin} = req.body;
     try{
-        let visite = await  updateVisiteur(idVisite, nom , prenom , cin);
+        let visite = await  updateVisiteur(id, nom , prenom , cin);
         res.status(201).json({ message: "Visiteur mise à jour avec succès" });
     }
     catch(err){
@@ -274,5 +275,27 @@ export async function updateVisitelieuAccueil(req, res) {
     catch(err){
         console.error(err);
         res.status(500).json({error:"problème de recuperation par id"});
+    }
+}
+
+export async function ChartMoisControlleur(req, res) {
+    try{
+        const visite= await chartMois();
+        res.status(201).json({message: "Donnée chart mois reussi", data: visite});
+    }
+    catch(err){
+        console.error(err);
+        res.status(500).json({error:"problème de recuperation "});
+    }
+}
+
+export async function ChartSemainesControlleur(req, res) {
+    try{
+        const visite= await chartSemaine();
+        res.status(201).json({message: "Donnée chart semaine reussi", data: visite});
+    }
+    catch(err){
+        console.error(err);
+        res.status(500).json({error:"problème de recuperation "});
     }
 }

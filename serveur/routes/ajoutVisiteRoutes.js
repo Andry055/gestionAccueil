@@ -14,11 +14,13 @@ import { CountVisiteursNowControlleur } from '../controllers/ajoutVisiteurContro
 import { VisitesForId } from '../controllers/ajoutVisiteurController.js';
 import { updateVisitelieuAccueil } from '../controllers/ajoutVisiteurController.js';
 import { UpdateVisitePersonneAccueil } from '../controllers/ajoutVisiteurController.js';
+import { ChartMoisControlleur } from '../controllers/ajoutVisiteurController.js';
+import { ChartSemainesControlleur } from '../controllers/ajoutVisiteurController.js';
 
 const router = express.Router();
 
 router.post('/ajoutVisite', createVisiteController);
-router.put('/updateVisiteur', updateVisiteurControlleur);
+router.put('/updateVisiteur/:id', updateVisiteurControlleur);
 router.put('/visiteTerminer/:id', visiteterminerControlleur);
 router.post('/visitePersonne', ajoutVisitePersonne);
 router.put('/visitePersonneTerminer/:id', visitePersonneTerminerController);
@@ -32,7 +34,8 @@ router.get('/nombreVisiteurs', CountVisiteursNowControlleur);
 router.get('/visiteParId/:id', VisitesForId);
 router.put('/accueil/UpdateVisiteLieu/:id',updateVisitelieuAccueil );
 router.put('/accueil/UpdateVisitePersonne/:id',UpdateVisitePersonneAccueil );
-
+router.get('/chartMois', ChartMoisControlleur);
+router.get('/chartSemaine', ChartSemainesControlleur);
 
 
 export default router;

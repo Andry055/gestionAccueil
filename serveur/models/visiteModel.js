@@ -190,3 +190,16 @@ export async function  selectIdVisiteurForVisitePersonne(idVisite) {
     return result.rows[0];
 }
 
+// graphique 
+
+export async function  chartMois() {
+    const result= await pool.query("SELECT TO_CHAR(date_p, 'Mon') AS mois, COUNT(*) AS nombre_visites, EXTRACT(MONTH FROM date_p) AS mois_num FROM visites_personne WHERE date_p >= CURRENT_DATE - INTERVAL '1 year' GROUP BY mois, mois_num ORDER BY mois_num;"
+    );
+    return result.rows;
+}
+
+export async function  chartSemaine() {
+    const result= await pool.query("SELECT 'Sem ' || EXTRACT(WEEK FROM date_p) AS semaine, COUNT(*) AS nombre_visites FROM visites_personne WHERE date_p >= DATE_TRUNC('year', CURRENT_DATE) GROUP BY EXTRACT(WEEK FROM date_p) ORDER BY EXTRACT(WEEK FROM date_p)"
+    );
+    return result.rows;
+}

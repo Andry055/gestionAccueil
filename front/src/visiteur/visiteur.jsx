@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import VisiteListPopup from "./listeVisite";
-import { NotebookText, Edit2, UserPlus2, Search, RefreshCw, X } from "lucide-react";
+import { NotebookText, Edit2, UserPlus2, Search, RefreshCw, X, History } from "lucide-react";
 import AjoutVisiteur from "./ajoutvisiteur";
 import AjoutVisite from "./ajoutVisite";
 import { useDarkMode } from "../utils/DarkModeContext";
@@ -8,16 +9,18 @@ import axios from "axios";
 
 export default function Visiteur() {
   const { darkMode } = useDarkMode();
-  const aujourdhui = new Date().toISOString().split("T")[0];
+  const navigate= useNavigate();
+
 
   // États
   const [visites, setVisites] = useState([]);
   const [openVisite, setOpenVisite] = useState(false);
   const [openAjout, setOpenAjout] = useState(false);
   const [openAjoutVisite, setOpenAjoutVisite] = useState(false);
-  const [visiteurActuel, setVisiteurActuel] = useState([]);
+  const [visiteurActuel, setVisiteurActuel] = useState({});
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState(null);
+  const [openModification, setOpenModification] = useState(false);
   const [filtres, setFiltres] = useState({
     id: "",
     nom: "",
@@ -49,6 +52,34 @@ export default function Visiteur() {
     };
     chargerVisiteurs();
   }, []);
+
+  // Modification d'un visiteur
+  const mettreAJourVisiteur = async () => {
+    setChargement(true);
+    try {
+      const id = visiteurActuel.id_visiteur;
+      const response = await axios.put(
+        `http://localhost:5000/visite/updateVisiteur/${id}`,
+        {
+          nom: visiteurActuel.nom,
+          prenom: visiteurActuel.prenom,
+          cin: visiteurActuel.cin
+        }
+      );
+      
+      if (response.data.message === "Visiteur mise à jour avec succès") {
+        // Rafraîchir la liste des visiteurs
+        const reponse = await axios.get(`http://localhost:5000/visite/listeVisiteur`);
+        setVisites(reponse.data.data);
+        setOpenModification(false);
+      }
+    } catch (err) {
+      console.error("Erreur lors de la modification:", err);
+      setErreur(err.response?.data?.error || "Erreur lors de la modification");
+    } finally {
+      setChargement(false);
+    }
+  };
 
   // Filtrage des visiteurs
   const visiteursFiltres = useMemo(() => {
@@ -152,6 +183,13 @@ export default function Visiteur() {
                   Réinitialiser
                 </button>
               )}
+              <button
+                onClick={() => navigate('/visite')} // À adapter selon votre routeur
+                className={`px-4 py-2.5 rounded-lg flex items-center gap-2 ${styles.boutonSecondaire} transition-all hover:scale-105`}
+              >
+                <History size={18} />
+                Historique de Visite
+              </button>
               <button
                 onClick={() => setOpenAjout(true)}
                 className={`px-5 py-2.5 rounded-lg flex items-center gap-2 ${styles.boutonPrimaire} transition-all hover:scale-105`}
@@ -312,6 +350,10 @@ export default function Visiteur() {
                                   <UserPlus2 size={18} />
                                 </button>
                                 <button
+                                  onClick={() => {
+                                    setVisiteurActuel(visiteur);
+                                    setOpenModification(true);
+                                  }}
                                   className={`p-2 rounded-lg ${darkMode ? "text-blue-400 hover:bg-blue-400/20" : "text-blue-600 hover:bg-blue-100"}`}
                                   title="Modifier"
                                 >
@@ -349,6 +391,69 @@ export default function Visiteur() {
         onClose={() => setOpenAjoutVisite(false)}
         visiteur={visiteurActuel}
       />
+
+      {/* Modal de modification */}
+      {openModification && (
+        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${darkMode ? 'bg-black/80' : 'bg-black/50'}`}>
+          <div className={`w-full max-w-md rounded-xl p-6 ${styles.cardBg}`}>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Modifier le visiteur</h2>
+              <button 
+                onClick={() => setOpenModification(false)}
+                className={`p-1 rounded-full ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Nom</label>
+                <input
+                  type="text"
+                  value={visiteurActuel.nom || ''}
+                  onChange={(e) => setVisiteurActuel({...visiteurActuel, nom: e.target.value})}
+                  className={`w-full px-3 py-2 rounded-lg border ${styles.inputBg}`}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Prénom</label>
+                <input
+                  type="text"
+                  value={visiteurActuel.prenom || ''}
+                  onChange={(e) => setVisiteurActuel({...visiteurActuel, prenom: e.target.value})}
+                  className={`w-full px-3 py-2 rounded-lg border ${styles.inputBg}`}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">CIN</label>
+                <input
+                  type="text"
+                  value={visiteurActuel.cin || ''}
+                  onChange={(e) => setVisiteurActuel({...visiteurActuel, cin: e.target.value})}
+                  className={`w-full px-3 py-2 rounded-lg border ${styles.inputBg}`}
+                />
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setOpenModification(false)}
+                className={`px-4 py-2 rounded-lg ${styles.boutonSecondaire}`}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={mettreAJourVisiteur}
+                disabled={chargement}
+                className={`px-4 py-2 rounded-lg ${styles.boutonPrimaire} ${chargement ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {chargement ? 'Enregistrement...' : 'Enregistrer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
