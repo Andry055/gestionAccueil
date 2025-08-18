@@ -203,3 +203,20 @@ export async function  chartSemaine() {
     );
     return result.rows;
 }
+export async function  SuperChartJour() {
+    const result= await pool.query("SELECT l.nom_lieu as nom, COUNT(v.id_visitelieu) as nombre_visites FROM visites_lieu v JOIN lieu l ON v.id_lieu = l.id_lieu WHERE v.date = CURRENT_DATE GROUP BY l.nom_lieu ORDER BY nombre_visites DESC;"
+    );
+    return result.rows;
+}
+
+export async function  SuperChartSemaine() {
+    const result= await pool.query("SELECT l.nom_lieu as nom, COUNT(v.id_visitelieu) as nombre_visites FROM visites_lieu v JOIN lieu l ON v.id_lieu = l.id_lieu WHERE v.date >= date_trunc('week', CURRENT_DATE) AND v.date < date_trunc('week', CURRENT_DATE) + interval '1 week' GROUP BY l.nom_lieu ORDER BY nombre_visites DESC;" );
+    return result.rows;
+}
+
+export async function  SuperChartMois() {
+    const result= await pool.query("SELECT l.nom_lieu as nom, COUNT(v.id_visitelieu) as nombre_visites FROM visites_lieu v JOIN lieu l ON v.id_lieu = l.id_lieu WHERE v.date >= date_trunc('month', CURRENT_DATE) AND v.date < date_trunc('month', CURRENT_DATE) + interval '1 month' GROUP BY l.nom_lieu ORDER BY nombre_visites DESC;" );
+    return result.rows;
+}
+
+

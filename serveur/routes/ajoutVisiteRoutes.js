@@ -1,5 +1,5 @@
 import express from 'express';
-import { createVisiteController } from '../controllers/ajoutVisiteurController.js';
+import { createVisiteController, SuperChartMoisControlleur, SuperChartSemaineControlleur } from '../controllers/ajoutVisiteurController.js';
 import { ajoutVisitePersonne } from '../controllers/ajoutVisiteurController.js';
 import { visiteterminerControlleur } from '../controllers/ajoutVisiteurController.js';
 import { visitePersonneTerminerController } from '../controllers/ajoutVisiteurController.js';
@@ -16,6 +16,8 @@ import { updateVisitelieuAccueil } from '../controllers/ajoutVisiteurController.
 import { UpdateVisitePersonneAccueil } from '../controllers/ajoutVisiteurController.js';
 import { ChartMoisControlleur } from '../controllers/ajoutVisiteurController.js';
 import { ChartSemainesControlleur } from '../controllers/ajoutVisiteurController.js';
+import { SuperChartJourControlleur } from '../controllers/ajoutVisiteurController.js';
+
 
 const router = express.Router();
 
@@ -36,6 +38,9 @@ router.put('/accueil/UpdateVisiteLieu/:id',updateVisitelieuAccueil );
 router.put('/accueil/UpdateVisitePersonne/:id',UpdateVisitePersonneAccueil );
 router.get('/chartMois', ChartMoisControlleur);
 router.get('/chartSemaine', ChartSemainesControlleur);
+router.get('/superChartJour', SuperChartJourControlleur);
+router.get('/superChartSemaine', SuperChartSemaineControlleur);
+router.get('/superChartMois', SuperChartMoisControlleur);
 
 
 export default router;

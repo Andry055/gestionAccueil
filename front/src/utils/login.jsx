@@ -119,9 +119,6 @@ export default function Login() {
         </form>
 
         <div className="mt-4 text-center">
-          <Link to="/register" className="text-blue-500 hover:underline">
-            S'enregistrer
-          </Link>
         </div>
       </motion.div>
     </div>

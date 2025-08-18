@@ -37,13 +37,13 @@ export default function SuperAdminService() {
   const [totalVisits, setTotalVisits] = useState(0);
   const [totalServices, setTotalServices] = useState(0);
   const [serviceToUpdate, setServiceToUpdate] = useState(null);
-  const [refresh, setRefresh] = useState(0); // Utilisation d'un compteur plutôt qu'un booléen
+  const [refresh, setRefresh] = useState(0);
 
   // Définition des classes de style
   const buttonBaseClasses = `
-    relative inline-flex items-center justify-center px-5 py-2 border rounded-full font-semibold
+    relative inline-flex items-center justify-center px-4 py-1.5 border rounded-full font-medium
     transition duration-300 ease-in-out cursor-pointer select-none
-    focus:outline-none focus:ring-4 focus:ring-indigo-300
+    focus:outline-none focus:ring-2 focus:ring-indigo-300 text-sm
   `;
 
   const buttonVariants = {
@@ -101,7 +101,7 @@ export default function SuperAdminService() {
   useEffect(() => {
     chargerServices();
     chargerTopServices();
-  }, [chargerServices, chargerTopServices, refresh]); // refresh est bien dans les dépendances
+  }, [chargerServices, chargerTopServices, refresh]);
 
   const filteredServices = useMemo(() => {
     return services.filter(service => {
@@ -115,14 +115,14 @@ export default function SuperAdminService() {
   }, [services, search]);
 
   const handleReset = () => setSearch("");
-  const handleRefresh = () => setRefresh(prev => prev + 1); // Incrémente le compteur
+  const handleRefresh = () => setRefresh(prev => prev + 1);
 
   // Configuration du graphique en cercle
   const chartData = {
     labels: topServices.map(service => service.nom_lieu),
     datasets: [
       {
-        label: "Nombre de visites",
+        label: "Visites",
         data: topServices.map(service => service.visites),
         backgroundColor: topServices.map((_, index) => 
           darkMode 
@@ -146,14 +146,14 @@ export default function SuperAdminService() {
           font: {
             size: 12
           },
-          padding: 20
+          padding: 10
         }
       },
       title: {
         display: true,
-        text: 'Répartition des visites par service',
+        text: 'Visites par service',
         color: darkMode ? '#fff' : '#333',
-        font: { size: 16 },
+        font: { size: 12 },
       },
       tooltip: {
         callbacks: {
@@ -161,12 +161,12 @@ export default function SuperAdminService() {
             const label = context.label || '';
             const value = context.raw || 0;
             const percentage = Math.round((value / totalVisits) * 100);
-            return `${label}: ${value} visites (${percentage}%)`;
+            return `${label}: ${value} (${percentage}%)`;
           }
         }
       }
     },
-    cutout: '60%',
+    cutout: '70%',
     animation: {
       animateScale: true,
       animateRotate: true
@@ -182,41 +182,41 @@ export default function SuperAdminService() {
   const statCardBg = darkMode ? "bg-gray-700 text-white" : "bg-indigo-100 text-indigo-800";
 
   return (
-    <div className={`min-h-screen pt-24 px-4 md:px-10 transition-all duration-300 ${bgMain}`}>
-      <h1 className="text-4xl font-extrabold mb-7 ml-2 md:ml-6">Services</h1>
+    <div className={`min-h-screen pt-20 px-4 md:px-8 transition-all duration-300 ${bgMain}`}>
+      <h1 className="text-4xl font-bold mb-5 ml-2 md:ml-4">Services</h1>
 
-      <div className="flex flex-col gap-8 max-w-7xl px-6 mx-auto pb-10">
+      <div className="flex flex-col gap-5 max-w-7xl px-4 mx-auto pb-8">
         {/* Première ligne : Statistiques et Graphique */}
-        <div className="flex flex-col md:flex-row gap-8">
+        <div className="flex flex-col md:flex-row gap-5">
           {/* Section Statistiques */}
-          <section className={`rounded-xl shadow-lg p-6 border-4 ${cardBg} w-full md:w-1/3`}>
-            <h2 className="text-2xl font-semibold mb-6">Statistiques</h2>
-            <div className="grid grid-cols-1 gap-4">
-              <div className={`p-4 rounded-lg ${statCardBg} shadow-md`}>
-                <h3 className="text-lg font-medium">Total des services</h3>
-                <p className="text-3xl font-bold">{totalServices}</p>
+          <section className={`rounded-lg shadow-md p-4 border-2 ${cardBg} w-full md:w-1/3`}>
+            <h2 className="text-xl font-semibold mb-4">Statistiques</h2>
+            <div className="grid grid-cols-1 gap-3">
+              <div className={`p-3 rounded-md ${statCardBg} shadow-sm`}>
+                <h3 className="text-base font-medium">Services</h3>
+                <p className="text-xl font-bold">{totalServices}</p>
               </div>
-              <div className={`p-4 rounded-lg ${statCardBg} shadow-md`}>
-                <h3 className="text-lg font-medium">Total des visites</h3>
-                <p className="text-3xl font-bold">{totalVisits}</p>
+              <div className={`p-3 rounded-md ${statCardBg} shadow-sm`}>
+                <h3 className="text-base font-medium">Visites</h3>
+                <p className="text-xl font-bold">{totalVisits}</p>
               </div>
-              <div className={`p-4 rounded-lg ${statCardBg} shadow-md`}>
-                <h3 className="text-lg font-medium">Service le plus visité</h3>
-                <p className="text-xl font-semibold">
+              <div className={`p-3 rounded-md ${statCardBg} shadow-sm`}>
+                <h3 className="text-base font-medium">Top service</h3>
+                <p className="text-lg font-semibold">
                   {topServices[0]?.nom_lieu || "N/A"} 
-                  <span className="block text-lg">{topServices[0]?.visites || 0} visites</span>
+                  <span className="block text-sm">{topServices[0]?.visites || 0}</span>
                 </p>
               </div>
             </div>
           </section>
 
           {/* Section Graphique */}
-          <section className={`rounded-xl shadow-lg p-6 border-4 ${cardBg} w-full md:w-2/3`}>
-            <div className="h-96">
+          <section className={`rounded-lg shadow-md p-4 border-2 ${cardBg} w-full md:w-2/3`}>
+            <div className="h-64">
               {topServices.length > 0 ? (
                 <Doughnut data={chartData} options={chartOptions} />
               ) : (
-                <p className="text-center py-10">Chargement des données...</p>
+                <p className="text-center py-8 text-sm">Chargement des données...</p>
               )}
             </div>
           </section>
@@ -224,63 +224,63 @@ export default function SuperAdminService() {
 
         {/* Deuxième ligne : Tableau des services */}
         <section
-          className={`rounded-xl shadow-lg p-6 md:p-8 overflow-y-auto max-h-[80vh] border-4 ${cardBg}`}
+          className={`rounded-lg shadow-md p-4 md:p-5 overflow-y-auto max-h-[70vh] border-2 ${cardBg}`}
         >
-          <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
-            <h2 className="text-2xl font-semibold">Liste des services</h2>
+          <div className="flex flex-wrap justify-between items-center mb-4 gap-3">
+            <h2 className="text-xl font-semibold">Liste des services</h2>
 
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-wrap items-center gap-3">
               {/* Bouton Rafraîchir */}
               <button
                 onClick={handleRefresh}
-                className={`${buttonBaseClasses} ${buttonVariants.green} shadow-sm`}
+                className={`${buttonBaseClasses} ${buttonVariants.green}`}
                 aria-label="Rafraîchir les données"
               >
-                <RotateCcw className="w-5 h-5 mr-2" />
+                <RotateCcw className="w-4 h-4 mr-1" />
                 Rafraîchir
               </button>
 
               {/* Bouton Voir tous */}
               <button
                 onClick={handleReset}
-                className={`${buttonBaseClasses} ${buttonVariants.neutral} shadow-sm`}
+                className={`${buttonBaseClasses} ${buttonVariants.neutral}`}
                 aria-label="Voir tous les services"
               >
                 Voir tous
-                <span className="ml-2 text-xl font-bold">→</span>
+                <span className="ml-1 text-lg font-bold">→</span>
               </button>
 
               {/* Bouton Ajout */}
               <button
                 onClick={() => setOpenAjout(true)}
-                className={`${buttonBaseClasses} ${buttonVariants.primary} shadow-lg`}
+                className={`${buttonBaseClasses} ${buttonVariants.primary}`}
                 aria-label="Ajouter un service"
               >
-                <UserPlus2 className="w-5 h-5 mr-2" />
+                <UserPlus2 className="w-4 h-4 mr-1" />
                 Ajout
               </button>
             </div>
           </div>
 
           {/* Recherche */}
-          <div className="mb-6">
+          <div className="mb-4">
             <input
               type="text"
               placeholder="Rechercher un service..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className={`w-full p-2 rounded-md border-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 ${inputBg}`}
+              className={`w-full p-1.5 rounded-md border-2 focus:outline-none focus:ring-1 focus:ring-indigo-400 text-sm ${inputBg}`}
             />
           </div>
 
-          <div className="overflow-y-auto" style={{ maxHeight: "calc(80vh - 180px)" }}>
+          <div className="overflow-y-auto" style={{ maxHeight: "calc(70vh - 150px)" }}>
             <table className="w-full min-w-[600px] border-collapse table-auto">
               <thead className={`${tableHead} sticky top-0 z-10`}>
                 <tr>
                   {["ID", "Nom", "Porte", "Étage", "Actions", "Modifier"].map((heading) => (
                     <th
                       key={heading}
-                      className="px-6 py-3 border-b border-gray-300 text-left font-medium whitespace-nowrap"
+                      className="px-4 py-2 border-b border-gray-300 text-left text-sm font-medium whitespace-nowrap"
                     >
                       {heading}
                     </th>
@@ -291,7 +291,7 @@ export default function SuperAdminService() {
               <tbody>
                 {filteredServices.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-10 text-gray-500">
+                    <td colSpan={6} className="text-center py-8 text-sm text-gray-500">
                       Aucun service trouvé.
                     </td>
                   </tr>
@@ -301,26 +301,26 @@ export default function SuperAdminService() {
                     key={`service-${service.id_lieu}`}
                     className={`${tableRowHover} transition-colors cursor-pointer`}
                   >
-                      <td className="px-6 py-4 border-b whitespace-nowrap">{service.id_lieu}</td>
-                      <td className="px-6 py-4 border-b whitespace-nowrap">{service.nom_lieu}</td>
-                      <td className="px-6 py-4 border-b whitespace-nowrap">{service.porte}</td>
-                      <td className="px-6 py-4 border-b whitespace-nowrap">{service.etage}</td>
-                      <td className="px-6 py-1 border-b whitespace-nowrap">
+                      <td className="px-4 py-2 border-b text-sm whitespace-nowrap">{service.id_lieu}</td>
+                      <td className="px-4 py-2 border-b text-sm whitespace-nowrap">{service.nom_lieu}</td>
+                      <td className="px-4 py-2 border-b text-sm whitespace-nowrap">{service.porte}</td>
+                      <td className="px-4 py-2 border-b text-sm whitespace-nowrap">{service.etage}</td>
+                      <td className="px-4 py-1 border-b whitespace-nowrap">
                         <button
                           onClick={() => setSelectedServiceId(service.id_lieu)}
-                          className={`inline-flex items-center justify-center px-3 py-1 rounded-full border transition duration-300 ${buttonVariants.yellow}`}
+                          className={`inline-flex items-center justify-center px-2 py-1 rounded-full border transition duration-300 text-xs ${buttonVariants.yellow}`}
                           aria-label={`Voir ${service.nom_lieu}`}
                         >
-                          <Eye className="w-5 h-5" />
+                          <Eye className="w-3 h-3" />
                         </button>
                       </td>
-                      <td className="px-6 py-1 border-b whitespace-nowrap">
+                      <td className="px-4 py-1 border-b whitespace-nowrap">
                       <button
                           onClick={() => setServiceToUpdate(service)}
-                          className={`inline-flex items-center justify-center px-3 py-1 rounded-full border transition duration-300 ${buttonVariants.blue}`}
+                          className={`inline-flex items-center justify-center px-2 py-1 rounded-full border transition duration-300 text-xs ${buttonVariants.blue}`}
                           aria-label={`Modifier ${service.nom_lieu}`}
                         >
-                          <Edit2 className="w-5 h-5" />
+                          <Edit2 className="w-3 h-3" />
                         </button>
                       </td>
                     </tr>
@@ -336,7 +336,7 @@ export default function SuperAdminService() {
         open={openAjout} 
         onClose={() => setOpenAjout(false)} 
         onSuccess={() => {
-          setRefresh(prev => prev + 1); // Incrémente le compteur après ajout
+          setRefresh(prev => prev + 1);
           setOpenAjout(false);
         }}
       />
@@ -353,7 +353,7 @@ export default function SuperAdminService() {
           service={serviceToUpdate}
           onClose={() => setServiceToUpdate(null)}
           onSuccess={() => {
-            setRefresh(prev => prev + 1); // Incrémente le compteur après mise à jour
+            setRefresh(prev => prev + 1);
             setServiceToUpdate(null);
           }}
         />

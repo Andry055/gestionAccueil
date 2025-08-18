@@ -185,7 +185,7 @@ const filteredServices = useMemo(() => {
             <table className="w-full min-w-[600px] border-collapse table-auto">
               <thead className={`${tableHead} sticky top-0 z-10`}>
                 <tr>
-                  {["ID", "Nom", "Porte", "Étage", "Actions", "Modifier"].map((heading) => (
+                  {["ID", "Nom", "Porte", "Étage", "Actions"].map((heading) => (
                     <th
                       key={heading}
                       className="px-6 py-3 border-b border-gray-300 text-left font-medium whitespace-nowrap"
@@ -220,14 +220,6 @@ const filteredServices = useMemo(() => {
                           aria-label={`Voir ${service.nom_lieu}`}
                         >
                           <Eye className="w-5 h-5" />
-                        </button>
-                      </td>
-                      <td className="px-6 py-1 border-b whitespace-nowrap">
-                        <button
-                          className={`inline-flex items-center justify-center px-3 py-1 rounded-full border transition duration-300 ${buttonVariants.blue}`}
-                          aria-label={`Modifier ${service.nom}`}
-                        >
-                          <Edit2 className="w-5 h-5" />
                         </button>
                       </td>
                     </tr>

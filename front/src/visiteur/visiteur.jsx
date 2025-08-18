@@ -114,10 +114,10 @@ export default function Visiteur() {
   // Styles
   const styles = {
     bgMain: darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-900",
-    cardBg: darkMode ? "bg-gray-800/80 border-gray-700" : "bg-white border-gray-200",
-    tableHead: darkMode ? "bg-gray-800 text-gray-300" : "bg-gray-100 text-gray-700",
+    cardBg: darkMode ? "bg-gray-800/80 border-gray-700" : "bg-blue-200 border-gray-400",
+    tableHead: darkMode ? "bg-gray-800 text-gray-300" : "bg-blue-200 text-blue-800 ",
     tableRowHover: darkMode ? "hover:bg-gray-800/50" : "hover:bg-gray-50",
-    borderColor: darkMode ? "border-gray-700" : "border-gray-200",
+    borderColor: darkMode ? "border-gray-700" : "border-gray-400",
     inputBg: darkMode ? "bg-gray-700 border-gray-600 text-gray-100" : "bg-white border-gray-300 text-gray-900",
     boutonPrimaire: darkMode 
       ? "bg-indigo-600 hover:bg-indigo-700 text-white border-indigo-700" 
@@ -162,10 +162,10 @@ export default function Visiteur() {
   return (
     <div className={`min-h-screen pt-24 px-4 md:px-10 ${styles.bgMain}`}>
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
+        <div className="mb-8 border-b-1 border-gray-400 pb-2">
           <h1 className="text-3xl font-bold mb-2">Gestion des Visiteurs</h1>
           <div className="flex flex-wrap gap-4 items-center justify-between">
-            <p className="text-gray-500 dark:text-gray-400">
+            <p className={darkMode ?" text-gray-100 dark:text-gray-200" :  " text-gray-600 dark:text-gray-700"}>
               {visiteursFiltres.length} {visiteursFiltres.length > 1 ? 'visiteurs trouvés' : 'visiteur trouvé'}
               {hasActiveFilters && (
                 <span className="ml-2 text-sm bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-200 px-2 py-1 rounded-full">
@@ -280,7 +280,7 @@ export default function Visiteur() {
 
           {/* Section principale avec tableau à droite */}
           <div className="lg:w-3/4">
-            <div className={`rounded-xl border ${styles.borderColor} overflow-hidden`}>
+            <div className={`rounded-xl border-2 ${styles.borderColor} overflow-hidden`}>
               <div className="overflow-x-auto">
                 <div className="max-h-[calc(100vh-300px)] overflow-y-auto">
                   <table className="w-full min-w-max">
@@ -294,7 +294,7 @@ export default function Visiteur() {
                         <th className="px-6 py-4 text-right font-medium">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                       {visiteursFiltres.length === 0 ? (
                         <tr>
                           <td colSpan={6} className="px-6 py-8 text-center">

@@ -1,5 +1,6 @@
-import { findVisitorCin, createVisiteur, createVisiteService, findServiceId, findPersonneId, updateVisiteur, updateVisitelieu, SelectAllVisiteur, SelectAllVisite, SelectAllVisiteNotLieu, SelectAllVisiteNotPersonne, countVisiteEncours, countVisitePersonneEncours, CountVisiteurLieuNow, CountVisiteurPersonneNow, selectAllVisiteForId, selectIdVisiteur, updateVisiteurWithoutCin, updateVisitelieuNom, selectIdVisiteurForVisitePersonne, updateVisitePersonne, updateVisitePersonneNom, chartMois, chartSemaine } from "../models/visiteModel.js";
+import { findVisitorCin, createVisiteur, createVisiteService, findServiceId, findPersonneId, updateVisiteur, updateVisitelieu, SelectAllVisiteur, SelectAllVisite, SelectAllVisiteNotLieu, SelectAllVisiteNotPersonne, countVisiteEncours, countVisitePersonneEncours, CountVisiteurLieuNow, CountVisiteurPersonneNow, selectAllVisiteForId, selectIdVisiteur, updateVisiteurWithoutCin, updateVisitelieuNom, selectIdVisiteurForVisitePersonne, updateVisitePersonne, updateVisitePersonneNom, chartMois, chartSemaine, SuperChartJour, SuperChartSemaine } from "../models/visiteModel.js";
 import { visiteTerminer, createPersonne , createVisitePersonne , visitePersonneTerminer} from "../models/visiteModel.js";
+import { SuperChartMois } from "../models/visiteModel.js";
 
 export async function createVisiteController(req, res) {
     const { nom, prenom, cin,nomAgent, motif, nomService } = req.body; 
@@ -293,6 +294,38 @@ export async function ChartSemainesControlleur(req, res) {
     try{
         const visite= await chartSemaine();
         res.status(201).json({message: "Donnée chart semaine reussi", data: visite});
+    }
+    catch(err){
+        console.error(err);
+        res.status(500).json({error:"problème de recuperation "});
+    }
+}
+
+export async function SuperChartJourControlleur(req, res) {
+    try{
+        const visite= await SuperChartJour();
+        res.status(201).json({message: "Donnée chart jours reussi", data: visite});
+    }
+    catch(err){
+        console.error(err);
+        res.status(500).json({error:"problème de recuperation "});
+    }
+}
+export async function SuperChartSemaineControlleur(req, res) {
+    try{
+        const visite= await SuperChartSemaine();
+        res.status(201).json({message: "Donnée chart semaine reussi", data: visite});
+    }
+    catch(err){
+        console.error(err);
+        res.status(500).json({error:"problème de recuperation "});
+    }
+}
+
+export async function SuperChartMoisControlleur(req, res) {
+    try{
+        const visite= await SuperChartMois();
+        res.status(201).json({message: "Donnée chart Mois reussi", data: visite});
     }
     catch(err){
         console.error(err);

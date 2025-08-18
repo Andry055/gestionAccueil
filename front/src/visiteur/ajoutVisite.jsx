@@ -17,7 +17,7 @@ export default function AjoutVisite({ open, onClose, visiteur }) {
     prenom: visiteur?.prenom || "",
     cin: visiteur?.cin || "",
     nomAgent: user?.username || 'Système',
-    nomPersonne: "",
+    personneVisite: "",
     motif: "",
     nomService: "",
   });
@@ -94,7 +94,7 @@ export default function AjoutVisite({ open, onClose, visiteur }) {
         prenom: visiteur?.prenom || "",
         cin: visiteur?.cin || "",
         nomAgent: user?.username || 'Système',
-        nomPersonne: "",
+        personneVisite: "",
         motif: "",
         nomService: "",
       });
@@ -232,8 +232,8 @@ export default function AjoutVisite({ open, onClose, visiteur }) {
                   <label className="block text-sm font-medium mb-1">Personne visitée :</label>
                   <input
                     type="text"
-                    name="nomPersonne"
-                    value={formData.nomPersonne}
+                    name="personneVisite"
+                    value={formData.personneVisite}
                     onChange={handleChange}
                     className={inputClass}
                     required
