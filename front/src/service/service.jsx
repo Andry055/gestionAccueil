@@ -13,8 +13,6 @@ export default function Service() {
   const [selectedServiceId, setSelectedServiceId] = useState(null);
 
 
-
-  const [search, setSearch] = useState("");
   const [filters, setFilters] = useState({ 
     id: "", 
     nom: "", 
@@ -106,18 +104,17 @@ const filteredServices = useMemo(() => {
 
   return (
     <div className={`min-h-screen pt-24 px-4 md:px-10 transition-all duration-300 ${bgMain}`}>
-      <h1 className="text-4xl font-extrabold mb-7 ml-2 md:ml-6">Services</h1>
+      <h1 className="text-3xl font-extrabold mb-2 ml-2 md:ml-6">Services</h1>
 
       <div className="flex flex-col md:flex-row gap-8 max-w-7xl px-6 mx-auto pb-10">
 
         {/* Filtres */}
         <section className={`rounded-xl shadow-lg md:p-8 w-full md:w-1/4 border-4 ${filterCardBg}`}>
-          <h2 className="text-2xl font-semibold text-center mb-6">Filtres</h2>
+          <h2 className="text-2xl font-semibold text-center mb-2">Filtres</h2>
 
           <div className="flex flex-col space-y-4">
             {["id", "nom", "porte", "etage"].map((field) => (
               <label key={field} className="flex flex-col font-medium capitalize">
-                {field === "etage" ? "Étage" : field === "porte" ? "Porte" : field}
                 <input
                   type={field === "id" || field === "porte" ? "number" : "text"}
                   name={field}
@@ -159,27 +156,9 @@ const filteredServices = useMemo(() => {
               </button>
 
               {/* Bouton Ajout */}
-              <button
-                onClick={() => setOpenAjout(true)}
-                className={`${buttonBaseClasses} ${buttonVariants.primary} shadow-lg`}
-                aria-label="Ajouter un service"
-              >
-                <UserPlus2 className="w-5 h-5 mr-2" />
-                Ajout
-              </button>
             </div>
           </div>
 
-          {/* Recherche */}
-          <div className="mb-6">
-            <input
-              type="text"
-              placeholder="Rechercher un service..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className={`w-full p-2 rounded-md border-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 ${inputBg}`}
-            />
-          </div>
 
           <div className="overflow-y-auto" style={{ maxHeight: "calc(80vh - 180px)" }}>
             <table className="w-full min-w-[600px] border-collapse table-auto">

@@ -211,7 +211,6 @@ export default function Visiteur() {
               </h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">ID</label>
                   <input
                     type="text"
                     name="id"
@@ -222,7 +221,6 @@ export default function Visiteur() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Nom</label>
                   <input
                     type="text"
                     name="nom"
@@ -233,7 +231,6 @@ export default function Visiteur() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Prénom</label>
                   <input
                     type="text"
                     name="prenom"
@@ -244,7 +241,6 @@ export default function Visiteur() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">CIN</label>
                   <input
                     type="text"
                     name="cin"
@@ -255,7 +251,6 @@ export default function Visiteur() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Agent</label>
                   <input
                     type="text"
                     name="agent"

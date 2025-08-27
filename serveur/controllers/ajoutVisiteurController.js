@@ -1,4 +1,4 @@
-import { findVisitorCin, createVisiteur, createVisiteService, findServiceId, findPersonneId, updateVisiteur, updateVisitelieu, SelectAllVisiteur, SelectAllVisite, SelectAllVisiteNotLieu, SelectAllVisiteNotPersonne, countVisiteEncours, countVisitePersonneEncours, CountVisiteurLieuNow, CountVisiteurPersonneNow, selectAllVisiteForId, selectIdVisiteur, updateVisiteurWithoutCin, updateVisitelieuNom, selectIdVisiteurForVisitePersonne, updateVisitePersonne, updateVisitePersonneNom, chartMois, chartSemaine, SuperChartJour, SuperChartSemaine } from "../models/visiteModel.js";
+import { findVisitorCin, createVisiteur, createVisiteService, findServiceId, findPersonneId, updateVisiteur, updateVisitelieu, SelectAllVisiteur, SelectAllVisite, SelectAllVisiteNotLieu, SelectAllVisiteNotPersonne, countVisiteEncours, countVisitePersonneEncours, CountVisiteurLieuNow, CountVisiteurPersonneNow, selectAllVisiteForId, selectIdVisiteur, updateVisiteurWithoutCin, updateVisitelieuNom, selectIdVisiteurForVisitePersonne, updateVisitePersonne, updateVisitePersonneNom, chartMois, chartSemaine, SuperChartJour, SuperChartSemaine, SelectAllVisitePersonne } from "../models/visiteModel.js";
 import { visiteTerminer, createPersonne , createVisitePersonne , visitePersonneTerminer} from "../models/visiteModel.js";
 import { SuperChartMois } from "../models/visiteModel.js";
 
@@ -186,6 +186,20 @@ export async function getAllVisiteursController(req, res) {
 export async function getAllVisiteLieuController(req, res) {
     try {
         const visites = await SelectAllVisite();
+        res.status(200).json({ 
+            message: "Visites listés avec succès",
+            data: visites
+        });
+    }
+    catch(err) {
+        console.error(err);
+        res.status(500).json({ error: "Erreur serveur" });        
+    }
+}
+
+export async function getAllVisitePersonneController(req, res) {
+    try {
+        const visites = await SelectAllVisitePersonne();
         res.status(200).json({ 
             message: "Visites listés avec succès",
             data: visites

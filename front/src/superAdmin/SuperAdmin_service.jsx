@@ -1,361 +1,372 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Eye, Edit2, RotateCcw, UserPlus2 } from "lucide-react";
-import AjoutService from "./ajoutService";
+import React, { useState, useEffect, useMemo } from "react";
+import { 
+  Eye, 
+  RotateCcw,
+  BarChart3,
+  Filter,
+  Search,
+  Plus
+} from "lucide-react";
+import AjoutService from "../superAdmin/ajoutService";
 import { useDarkMode } from "../utils/DarkModeContext";
 import axios from "axios";
 import ListeService from "../service/listeService";
-import { Doughnut } from "react-chartjs-2";
-import UpdateService from "../service/UpdateService";
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
   Tooltip,
-  Legend,
-  ArcElement
-} from "chart.js";
+  ResponsiveContainer
+} from 'recharts';
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement
-);
-
-export default function SuperAdminService() {
+export default function Service() {
   const { darkMode } = useDarkMode();
   const [openAjout, setOpenAjout] = useState(false);
-  const [services, setServices] = useState([]);
+  const [services, setService] = useState([]);
   const [selectedServiceId, setSelectedServiceId] = useState(null);
-  const [search, setSearch] = useState("");
-  const [topServices, setTopServices] = useState([]);
-  const [totalVisits, setTotalVisits] = useState(0);
-  const [totalServices, setTotalServices] = useState(0);
-  const [serviceToUpdate, setServiceToUpdate] = useState(null);
-  const [refresh, setRefresh] = useState(0);
+  const [chartData, setChartData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [topServicesLoading, setTopServicesLoading] = useState(true);
 
-  // Définition des classes de style
-  const buttonBaseClasses = `
-    relative inline-flex items-center justify-center px-4 py-1.5 border rounded-full font-medium
-    transition duration-300 ease-in-out cursor-pointer select-none
-    focus:outline-none focus:ring-2 focus:ring-indigo-300 text-sm
-  `;
+  const [filters, setFilters] = useState({ 
+    id: "", 
+    nom: "", 
+    porte: "", 
+    etage: "" 
+  });
+  const [searchValues, setSearchValues] = useState({ 
+    id: "", 
+    nom: "", 
+    porte: "", 
+    etage: "" 
+  });
 
-  const buttonVariants = {
-    primary: darkMode
-      ? "border-indigo-500 text-indigo-400 hover:text-white hover:bg-indigo-600 focus:ring-indigo-500"
-      : "border-indigo-600 text-indigo-700 hover:text-white hover:bg-indigo-600 focus:ring-indigo-300",
-    neutral: darkMode
-      ? "border-gray-500 text-gray-400 hover:text-white hover:bg-gray-600 focus:ring-gray-500"
-      : "border-gray-400 text-gray-700 hover:text-white hover:bg-gray-600 focus:ring-gray-300",
-    yellow: darkMode
-      ? "border-yellow-400 text-yellow-300 hover:bg-yellow-400 hover:text-gray-900"
-      : "border-yellow-600 text-yellow-700 hover:bg-yellow-600 hover:text-white",
-    green: darkMode
-      ? "border-green-400 text-green-300 hover:bg-green-400 hover:text-gray-900"
-      : "border-green-600 text-green-700 hover:bg-green-600 hover:text-white",
-    blue: darkMode
-      ? "border-blue-400 text-blue-300 hover:bg-blue-400 hover:text-gray-900"
-      : "border-blue-600 text-blue-700 hover:bg-blue-600 hover:text-white"
-  };
-
-  const chargerServices = useCallback(async () => {
-    try {
-      const response = await axios.get(`http://localhost:5000/service/listeService`);
-      if (response.data?.data && Array.isArray(response.data.data)) {
-        setServices(response.data.data);
-        setTotalServices(response.data.data.length);
+  useEffect(() => {
+    const chargerServices = async () => {
+      try {
+        setLoading(true);
+        const reponse = await axios.get(`http://localhost:5000/service/listeService`);
+        if (reponse.data && reponse.data.data && Array.isArray(reponse.data.data)) {
+          setService(reponse.data.data);
+        } else {
+          throw new Error("Format de données inattendu");
+        }
+      } catch (err) {
+        console.error("Erreur chargement services:", err);
+        setService([]);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("Erreur chargement services:", err);
-    }
-  }, []);
+    };
 
-  const chargerTopServices = useCallback(async () => {
-    try {
-      const response = await axios.get(`http://localhost:5000/service/topServices`);
-      const validatedData = response.data.data.map(item => ({
-        nom_lieu: item.nom_lieu || "Inconnu",
-        visites: Number(item.visites) || 0
-      }));
-      if (response.data?.data && Array.isArray(response.data.data)) {
-        const total = validatedData.reduce(
-          (sum, service) => sum + service.visites, 
-          0
-        );
-        setTopServices(validatedData);
-        setTotalVisits(total);
+    const chargerTopServices = async () => {
+      try {
+        setTopServicesLoading(true);
+        const reponse = await axios.get(`http://localhost:5000/service/topServices`);
+        if (reponse.data && reponse.data.data && Array.isArray(reponse.data.data)) {
+          // Formater les données pour l'histogramme
+          const chartData = reponse.data.data.map(service => ({
+            name: service.nom_lieu,
+            shortName: service.nom_lieu.length > 15 
+              ? service.nom_lieu.substring(0, 12) + '...' 
+              : service.nom_lieu,
+            visites: parseInt(service.visites),
+            id: service.nom_lieu
+          }));
+          setChartData(chartData);
+        } else {
+          throw new Error("Format de données inattendu pour les top services");
+        }
+      } catch (err) {
+        console.error("Erreur chargement top services:", err);
+        setChartData([]);
+      } finally {
+        setTopServicesLoading(false);
       }
-    } catch (err) {
-      console.error("Erreur chargement top services:", err);
-      setTopServices([]);
-      setTotalVisits(0);
-    }
+    };
+
+    chargerServices();
+    chargerTopServices();
   }, []);
 
   useEffect(() => {
-    chargerServices();
-    chargerTopServices();
-  }, [chargerServices, chargerTopServices, refresh]);
+    const timer = setTimeout(() => setFilters(searchValues), 500);
+    return () => clearTimeout(timer);
+  }, [searchValues]);
 
   const filteredServices = useMemo(() => {
     return services.filter(service => {
       return (
-        String(service.id_lieu).includes(search) ||
-        service.nom_lieu.toLowerCase().includes(search.toLowerCase()) ||
-        String(service.porte).includes(search) ||
-        String(service.etage).includes(search)
+        (filters.id === "" || String(service.id_lieu).includes(filters.id)) &&
+        (filters.nom === "" || service.nom_lieu.toLowerCase().includes(filters.nom.toLowerCase())) &&
+        (filters.porte === "" || String(service.porte).includes(filters.porte)) &&
+        (filters.etage === "" || String(service.etage).includes(filters.etage))
       );
     });
-  }, [services, search]);
+  }, [services, filters]);
 
-  const handleReset = () => setSearch("");
-  const handleRefresh = () => setRefresh(prev => prev + 1);
-
-  // Configuration du graphique en cercle
-  const chartData = {
-    labels: topServices.map(service => service.nom_lieu),
-    datasets: [
-      {
-        label: "Visites",
-        data: topServices.map(service => service.visites),
-        backgroundColor: topServices.map((_, index) => 
-          darkMode 
-            ? `hsl(${index * 360 / topServices.length}, 70%, 50%)`
-            : `hsl(${index * 360 / topServices.length}, 70%, 40%)`
-        ),
-        borderColor: darkMode ? 'rgba(200, 200, 200, 0.8)' : 'rgba(0, 0, 0, 0.1)',
-        borderWidth: 1,
-      },
-    ],
+  const handleChange = (e) => {
+    setSearchValues({ ...searchValues, [e.target.name]: e.target.value });
   };
 
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'right',
-        labels: {
-          color: darkMode ? '#fff' : '#333',
-          font: {
-            size: 12
-          },
-          padding: 10
-        }
-      },
-      title: {
-        display: true,
-        text: 'Visites par service',
-        color: darkMode ? '#fff' : '#333',
-        font: { size: 12 },
-      },
-      tooltip: {
-        callbacks: {
-          label: function(context) {
-            const label = context.label || '';
-            const value = context.raw || 0;
-            const percentage = Math.round((value / totalVisits) * 100);
-            return `${label}: ${value} (${percentage}%)`;
-          }
-        }
-      }
-    },
-    cutout: '70%',
-    animation: {
-      animateScale: true,
-      animateRotate: true
-    }
+  const handleReset = () => {
+    setSearchValues({ id: "", nom: "", porte: "", etage: "" });
+    setFilters({ id: "", nom: "", porte: "", etage: "" });
   };
 
   // Styles conditionnels
-  const bgMain = darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900";
-  const cardBg = darkMode ? "bg-gray-800 text-gray-100 border-gray-600" : "bg-white text-gray-700 border-blue-300";
+  const bgMain = darkMode ? "bg-gray-900" : "bg-gray-100";
+  const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200";
+  const filterCardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-blue-50 border-blue-200";
+  const textPrimary = darkMode ? "text-gray-100" : "text-gray-900";
+  const textSecondary = darkMode ? "text-gray-300" : "text-gray-600";
   const tableHead = darkMode ? "bg-gray-700 text-gray-200" : "bg-indigo-100 text-indigo-700";
   const tableRowHover = darkMode ? "hover:bg-gray-700" : "hover:bg-indigo-50";
-  const inputBg = darkMode ? "bg-gray-700 text-white border-gray-500" : "bg-white text-black border-gray-300";
-  const statCardBg = darkMode ? "bg-gray-700 text-white" : "bg-indigo-100 text-indigo-800";
+  const inputBg = darkMode ? "bg-gray-700 text-white border-gray-600" : "bg-white text-gray-900 border-gray-300";
+
+  const buttonBaseClasses = `
+    inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium
+    transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500
+  `;
+
+  const buttonVariants = {
+    primary: darkMode
+      ? "bg-indigo-600 text-white hover:bg-indigo-700"
+      : "bg-indigo-600 text-white hover:bg-indigo-700",
+    secondary: darkMode
+      ? "bg-gray-700 text-gray-200 hover:bg-gray-600"
+      : "bg-gray-200 text-gray-700 hover:bg-gray-300",
+    outline: darkMode
+      ? "border border-gray-600 text-gray-300 hover:bg-gray-700"
+      : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+  };
+
+  // Composant Tooltip personnalisé
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className={`p-3 rounded-lg shadow-lg ${darkMode ? 'bg-gray-700' : 'bg-white'} border ${darkMode ? 'border-gray-600' : 'border-gray-200'}`}>
+          <p className={`font-medium ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+            {payload[0].payload.name}
+          </p>
+          <p className={darkMode ? 'text-gray-300' : 'text-gray-600'}>
+            Visites: <span className="font-medium">{payload[0].value}</span>
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
-    <div className={`min-h-screen pt-20 px-4 md:px-8 transition-all duration-300 ${bgMain}`}>
-      <h1 className="text-4xl font-bold mb-5 ml-2 md:ml-4">Services</h1>
-
-      <div className="flex flex-col gap-5 max-w-7xl px-4 mx-auto pb-8">
-        {/* Première ligne : Statistiques et Graphique */}
-        <div className="flex flex-col md:flex-row gap-5">
-          {/* Section Statistiques */}
-          <section className={`rounded-lg shadow-md p-4 border-2 ${cardBg} w-full md:w-1/3`}>
-            <h2 className="text-xl font-semibold mb-4">Statistiques</h2>
-            <div className="grid grid-cols-1 gap-3">
-              <div className={`p-3 rounded-md ${statCardBg} shadow-sm`}>
-                <h3 className="text-base font-medium">Services</h3>
-                <p className="text-xl font-bold">{totalServices}</p>
-              </div>
-              <div className={`p-3 rounded-md ${statCardBg} shadow-sm`}>
-                <h3 className="text-base font-medium">Visites</h3>
-                <p className="text-xl font-bold">{totalVisits}</p>
-              </div>
-              <div className={`p-3 rounded-md ${statCardBg} shadow-sm`}>
-                <h3 className="text-base font-medium">Top service</h3>
-                <p className="text-lg font-semibold">
-                  {topServices[0]?.nom_lieu || "N/A"} 
-                  <span className="block text-sm">{topServices[0]?.visites || 0}</span>
-                </p>
-              </div>
-            </div>
-          </section>
-
-          {/* Section Graphique */}
-          <section className={`rounded-lg shadow-md p-4 border-2 ${cardBg} w-full md:w-2/3`}>
-            <div className="h-64">
-              {topServices.length > 0 ? (
-                <Doughnut data={chartData} options={chartOptions} />
-              ) : (
-                <p className="text-center py-8 text-sm">Chargement des données...</p>
-              )}
-            </div>
-          </section>
+    <div className={`min-h-screen pt-20 px-4 transition-colors duration-300 ${bgMain}`}>
+      <div className="max-w-7xl mx-auto">
+        {/* En-tête */}
+        <div className="mb-6">
+          <h1 className={`text-2xl font-bold ${textPrimary} mb-2`}>Gestion des Services</h1>
+          <p className={`text-sm ${textSecondary}`}>
+            Gérez et consultez tous les services de l'organisation
+          </p>
         </div>
 
-        {/* Deuxième ligne : Tableau des services */}
-        <section
-          className={`rounded-lg shadow-md p-4 md:p-5 overflow-y-auto max-h-[70vh] border-2 ${cardBg}`}
-        >
-          <div className="flex flex-wrap justify-between items-center mb-4 gap-3">
-            <h2 className="text-xl font-semibold">Liste des services</h2>
-
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Bouton Rafraîchir */}
-              <button
-                onClick={handleRefresh}
-                className={`${buttonBaseClasses} ${buttonVariants.green}`}
-                aria-label="Rafraîchir les données"
-              >
-                <RotateCcw className="w-4 h-4 mr-1" />
-                Rafraîchir
-              </button>
-
-              {/* Bouton Voir tous */}
+        {/* Nouvelle disposition: Filtres en haut, tableau et graphique côte à côte */}
+        <div className="flex flex-col gap-6">
+          {/* Section Filtres */}
+          <div className={`rounded-xl shadow-md border ${filterCardBg} p-5`}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className={`text-lg font-semibold ${textPrimary} flex items-center gap-2`}>
+                <Filter className="h-5 w-5 text-indigo-500" />
+                Filtres
+              </h2>
               <button
                 onClick={handleReset}
-                className={`${buttonBaseClasses} ${buttonVariants.neutral}`}
-                aria-label="Voir tous les services"
+                className={`text-xs ${buttonVariants.outline} px-3 py-1`}
               >
-                Voir tous
-                <span className="ml-1 text-lg font-bold">→</span>
+                Réinitialiser
               </button>
+            </div>
 
-              {/* Bouton Ajout */}
-              <button
-                onClick={() => setOpenAjout(true)}
-                className={`${buttonBaseClasses} ${buttonVariants.primary}`}
-                aria-label="Ajouter un service"
-              >
-                <UserPlus2 className="w-4 h-4 mr-1" />
-                Ajout
-              </button>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {["id", "nom", "porte", "etage"].map((field) => (
+                <div key={field}>
+                  <label className={`text-sm font-medium ${textPrimary} block mb-1`}>
+                    {field === "etage" ? "Étage" : field === "porte" ? "Porte" : field === "nom" ? "Nom" : "ID"}
+                  </label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      type={field === "id" || field === "porte" ? "number" : "text"}
+                      name={field}
+                      value={searchValues[field]}
+                      onChange={handleChange}
+                      placeholder={`Rechercher...`}
+                      className={`w-full pl-10 pr-3 py-2 rounded-lg border text-sm ${inputBg}`}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Recherche */}
-          <div className="mb-4">
-            <input
-              type="text"
-              placeholder="Rechercher un service..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className={`w-full p-1.5 rounded-md border-2 focus:outline-none focus:ring-1 focus:ring-indigo-400 text-sm ${inputBg}`}
-            />
-          </div>
-
-          <div className="overflow-y-auto" style={{ maxHeight: "calc(70vh - 150px)" }}>
-            <table className="w-full min-w-[600px] border-collapse table-auto">
-              <thead className={`${tableHead} sticky top-0 z-10`}>
-                <tr>
-                  {["ID", "Nom", "Porte", "Étage", "Actions", "Modifier"].map((heading) => (
-                    <th
-                      key={heading}
-                      className="px-4 py-2 border-b border-gray-300 text-left text-sm font-medium whitespace-nowrap"
+          {/* Section principale: Tableau et Graphique côte à côte */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Tableau des services (2/3 de largeur) */}
+            <div className="lg:col-span-2">
+              <div className={`rounded-xl shadow-md border ${cardBg} p-5`}>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+                  <h2 className={`text-lg font-semibold ${textPrimary}`}>
+                    Liste des Services ({filteredServices.length})
+                  </h2>
+                  
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleReset}
+                      className={`${buttonBaseClasses} ${buttonVariants.secondary} text-sm`}
                     >
-                      {heading}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
+                      Voir tous
+                    </button>
+                    <button
+                      onClick={() => setOpenAjout(true)}
+                      className={`${buttonBaseClasses} ${buttonVariants.primary} text-sm flex items-center gap-2`}
+                    >
+                      <Plus className="h-4 w-4" />
+                      Ajouter
+                    </button>
+                  </div>
+                </div>
 
-              <tbody>
-                {filteredServices.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="text-center py-8 text-sm text-gray-500">
-                      Aucun service trouvé.
-                    </td>
-                  </tr>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className={`${tableHead}`}>
+                      <tr>
+                        {["ID", "Nom", "Porte", "Étage", "Actions"].map((heading) => (
+                          <th
+                            key={heading}
+                            className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap"
+                          >
+                            {heading}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                      {loading ? (
+                        <tr>
+                          <td colSpan={5} className="text-center py-8 text-gray-500">
+                            Chargement des services...
+                          </td>
+                        </tr>
+                      ) : filteredServices.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="text-center py-8 text-gray-500">
+                            Aucun service trouvé.
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredServices.map((service) => (
+                          <tr
+                            key={service.id_lieu}
+                            className={`${tableRowHover} transition-colors`}
+                          >
+                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                              {service.id_lieu}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                              {service.nom_lieu}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                              {service.porte}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                              {service.etage}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm">
+                              <button
+                                onClick={() => setSelectedServiceId(service.id_lieu)}
+                                className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'} transition-colors`}
+                                title="Voir les détails"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* Graphique (1/3 de largeur) */}
+            <div className="lg:col-span-1">
+              <div className={`rounded-xl shadow-md border ${cardBg} p-5 h-full`}>
+                <h2 className={`text-lg font-semibold ${textPrimary} flex items-center gap-2 mb-4`}>
+                  <BarChart3 className="h-5 w-5 text-indigo-500" />
+                  Top Services Visités
+                </h2>
+                
+                {topServicesLoading ? (
+                  <div className="h-64 flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
+                  </div>
+                ) : chartData.length === 0 ? (
+                  <div className="h-64 flex items-center justify-center text-gray-500">
+                    Aucune donnée de visites disponible
+                  </div>
                 ) : (
-                  filteredServices.map((service) => (
-                    <tr
-                    key={`service-${service.id_lieu}`}
-                    className={`${tableRowHover} transition-colors cursor-pointer`}
-                  >
-                      <td className="px-4 py-2 border-b text-sm whitespace-nowrap">{service.id_lieu}</td>
-                      <td className="px-4 py-2 border-b text-sm whitespace-nowrap">{service.nom_lieu}</td>
-                      <td className="px-4 py-2 border-b text-sm whitespace-nowrap">{service.porte}</td>
-                      <td className="px-4 py-2 border-b text-sm whitespace-nowrap">{service.etage}</td>
-                      <td className="px-4 py-1 border-b whitespace-nowrap">
-                        <button
-                          onClick={() => setSelectedServiceId(service.id_lieu)}
-                          className={`inline-flex items-center justify-center px-2 py-1 rounded-full border transition duration-300 text-xs ${buttonVariants.yellow}`}
-                          aria-label={`Voir ${service.nom_lieu}`}
-                        >
-                          <Eye className="w-3 h-3" />
-                        </button>
-                      </td>
-                      <td className="px-4 py-1 border-b whitespace-nowrap">
-                      <button
-                          onClick={() => setServiceToUpdate(service)}
-                          className={`inline-flex items-center justify-center px-2 py-1 rounded-full border transition duration-300 text-xs ${buttonVariants.blue}`}
-                          aria-label={`Modifier ${service.nom_lieu}`}
-                        >
-                          <Edit2 className="w-3 h-3" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
+                  <>
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#4B5563" : "#E5E7EB"} />
+                          <XAxis 
+                            dataKey="shortName" 
+                            stroke={darkMode ? "#9CA3AF" : "#6B7280"}
+                            fontSize={12}
+                            tick={{ angle: -45, textAnchor: 'end' }}
+                            height={60}
+                          />
+                          <YAxis 
+                            stroke={darkMode ? "#9CA3AF" : "#6B7280"}
+                            fontSize={12}
+                          />
+                          <Tooltip content={<CustomTooltip />} />
+                          <Bar 
+                            dataKey="visites" 
+                            fill="#6366F1" 
+                            radius={[4, 4, 0, 0]}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                    
+                    <div className="mt-4 grid grid-cols-2 gap-2">
+                      <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'} text-center`}>
+                        <p className={`text-xs ${textSecondary}`}>Services total</p>
+                        <p className={`text-xl font-bold mt-1 ${textPrimary}`}>{services.length}</p>
+                      </div>
+                      <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'} text-center`}>
+                        <p className={`text-xs ${textSecondary}`}>Services populaires</p>
+                        <p className={`text-xl font-bold mt-1 ${textPrimary}`}>{chartData.length}</p>
+                      </div>
+                    </div>
+                  </>
                 )}
-              </tbody>
-            </table>
+              </div>
+            </div>
           </div>
-        </section>
+        </div>
       </div>
 
-      <AjoutService 
-        open={openAjout} 
-        onClose={() => setOpenAjout(false)} 
-        onSuccess={() => {
-          setRefresh(prev => prev + 1);
-          setOpenAjout(false);
-        }}
-      />
-      
+      <AjoutService open={openAjout} onClose={() => setOpenAjout(false)} />
       {selectedServiceId && (
         <ListeService 
           serviceId={selectedServiceId} 
           onClose={() => setSelectedServiceId(null)} 
-        />
-      )}
-      
-      {serviceToUpdate && (
-        <UpdateService
-          service={serviceToUpdate}
-          onClose={() => setServiceToUpdate(null)}
-          onSuccess={() => {
-            setRefresh(prev => prev + 1);
-            setServiceToUpdate(null);
-          }}
         />
       )}
     </div>

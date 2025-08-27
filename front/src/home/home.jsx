@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from "react-router-dom";
 import axios from 'axios';
 import { 
@@ -13,6 +13,99 @@ import {
 } from '@heroicons/react/24/outline';
 import { useDarkMode } from '../utils/DarkModeContext';
 import AjoutVisiteur from '../visiteur/ajoutvisiteur';
+
+// Composant Popup pour la sélection de service
+const ServiceSelectionPopup = ({ 
+  services, 
+  searchTerm, 
+  onSearchChange, 
+  onSelect, 
+  onClose, 
+  darkMode 
+}) => {
+  const popupRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (popupRef.current && !popupRef.current.contains(event.target)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onClose]);
+
+  const filteredServices = services.filter(service =>
+    service.nom_lieu.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20">
+      <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
+      <div 
+        ref={popupRef}
+        className={`relative w-full max-w-md max-h-96 overflow-hidden rounded-lg shadow-xl ${
+          darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
+        }`}
+      >
+        <div className={`p-4 border-b ${
+          darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-100 border-gray-200'
+        }`}>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-semibold">Sélectionner un service</h3>
+            <button 
+              onClick={onClose}
+              className={`p-1 rounded-full hover:bg-opacity-20 ${
+                darkMode ? 'hover:bg-white' : 'hover:bg-gray-300'
+              }`}
+            >
+              <XMarkIcon className="h-5 w-5" />
+            </button>
+          </div>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Rechercher un service..."
+              value={searchTerm}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className={`w-full p-2 pl-9 rounded border text-sm ${
+                darkMode 
+                  ? 'bg-gray-600 border-gray-500 text-white' 
+                  : 'bg-white border-gray-300 text-gray-900'
+              } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+              autoFocus
+            />
+            <MagnifyingGlassIcon className={`absolute left-2.5 top-2.5 h-4 w-4 ${
+              darkMode ? 'text-gray-400' : 'text-gray-500'
+            }`} />
+          </div>
+        </div>
+        <div className="overflow-y-auto max-h-64">
+          {filteredServices.length > 0 ? (
+            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+              {filteredServices.map(service => (
+                <li
+                  key={service.id_lieu}
+                  className={`p-3 cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-700 transition-colors`}
+                  onClick={() => onSelect(service)}
+                >
+                  <span className="block truncate">{service.nom_lieu}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+              Aucun service trouvé
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function Home() {
   const { darkMode } = useDarkMode();
@@ -43,7 +136,7 @@ export default function Home() {
     nom_agent: '',
     heure_arrivee: ''
   });
-  const [showServiceSearch, setShowServiceSearch] = useState(false);
+  const [showServicePopup, setShowServicePopup] = useState(false);
   const [serviceSearchTerm, setServiceSearchTerm] = useState("");
 
   // Charger les statistiques
@@ -124,11 +217,6 @@ export default function Home() {
     ? filtrerVisites(visitesLieu) 
     : filtrerVisites(visitesPersonne);
 
-  // Filtrer les services
-  const filteredServices = servicesList.filter(service =>
-    service.nom_lieu.toLowerCase().includes(serviceSearchTerm.toLowerCase())
-  );
-
   // Formater l'heure
   const formatHeure = (heure) => {
     if (!heure) return '';
@@ -169,9 +257,10 @@ export default function Home() {
       nom: visite.nom || '',
       prenom: visite.prenom || '',
       nom_lieu: visite.nom_lieu || '',
-      nom_agent: visite.nom_agent || ''
+      nom_agent: visite.nom_agent || '',
+      heure_arrivee: visite.heure_arrivee || ''
     });
-    setShowServiceSearch(false);
+    setShowServicePopup(false);
     setServiceSearchTerm("");
   };
 
@@ -184,6 +273,7 @@ export default function Home() {
       nom_agent: '',
       heure_arrivee: ''
     });
+    setShowServicePopup(false);
   };
 
   const handleInputChange = (e) => {
@@ -199,7 +289,12 @@ export default function Home() {
       ...prev,
       nom_lieu: service.nom_lieu
     }));
-    setShowServiceSearch(false);
+    setShowServicePopup(false);
+    setServiceSearchTerm("");
+  };
+
+  const handleServiceFieldClick = () => {
+    setShowServicePopup(true);
   };
 
   const handleSubmitEdit = async () => {
@@ -249,6 +344,7 @@ export default function Home() {
       }
       
       setEditingId(null);
+      setShowServicePopup(false);
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.error || "Erreur lors de la modification");
@@ -312,7 +408,7 @@ export default function Home() {
   const bgMain = darkMode ? "bg-gray-900" : "bg-gray-50";
   const textPrimary = darkMode ? "text-gray-100" : "text-gray-900";
   const textSecondary = darkMode ? "text-gray-300" : "text-gray-600";
-  const tableHead = darkMode ? "bg-gray-700 text-gray-200 border-b-1" : "bg-blue-200 text-blue-800";
+  const tableHead = darkMode ? "bg-gray-700 text-gray-200" : "bg-blue-200 text-blue-800";
   const tableRowHover = darkMode ? "hover:bg-gray-800" : "hover:bg-indigo-50";
   const cardBg = darkMode ? "bg-gray-800" : "bg-white";
   const borderColor = darkMode ? "border-gray-700" : "border-gray-200";
@@ -561,47 +657,13 @@ export default function Home() {
                                       <div className="relative">
                                         <div 
                                           className={`cursor-pointer p-1.5 rounded border text-sm ${inputBg} ${borderColor} flex items-center justify-between`}
-                                          onClick={() => setShowServiceSearch(!showServiceSearch)}
+                                          onClick={handleServiceFieldClick}
                                         >
                                           <span className="truncate max-w-[180px]">{formData.nom_lieu || "Sélectionner un service"}</span>
-                                          <svg className={`h-4 w-4 ml-1 transition-transform ${showServiceSearch ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <svg className={`h-4 w-4 ml-1 transition-transform ${showServicePopup ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                           </svg>
                                         </div>
-                                        
-                                        {showServiceSearch && (
-                                          <div className={`absolute z-20 mt-1 w-full max-h-60 overflow-auto rounded-md shadow-lg ${darkMode ? "bg-gray-800" : "bg-white"} border ${borderColor}`}>
-                                            <div className={`p-2 border-b ${darkMode ? "bg-gray-700 border-gray-600" : "bg-gray-50 border-gray-200"}`}>
-                                              <div className="relative">
-                                                <input
-                                                  type="text"
-                                                  placeholder="Rechercher un service..."
-                                                  value={serviceSearchTerm}
-                                                  onChange={(e) => setServiceSearchTerm(e.target.value)}
-                                                  className={`w-full p-2 pl-8 rounded border text-sm ${inputBg} ${borderColor} focus:ring-2 focus:ring-blue-500`}
-                                                />
-                                                <MagnifyingGlassIcon className={`absolute left-2 top-2.5 h-4 w-4 ${darkMode ? "text-gray-400" : "text-gray-500"}`} />
-                                              </div>
-                                            </div>
-                                            <div className="divide-y">
-                                              {filteredServices.length > 0 ? (
-                                                filteredServices.map(service => (
-                                                  <div
-                                                    key={service.id_lieu}
-                                                    className={`p-2 cursor-pointer text-sm ${darkMode ? "hover:bg-gray-700" : "hover:bg-blue-50"}`}
-                                                    onClick={() => handleServiceSelect(service)}
-                                                  >
-                                                    <span className="truncate block">{service.nom_lieu}</span>
-                                                  </div>
-                                                ))
-                                              ) : (
-                                                <div className="p-2 text-sm text-gray-500">
-                                                  Aucun service trouvé
-                                                </div>
-                                              )}
-                                            </div>
-                                          </div>
-                                        )}
                                       </div>
                                     ) : isEditing && sousMode === "personne" ? (
                                       <input
@@ -732,6 +794,7 @@ export default function Home() {
                       )}
                     </tbody>
                   </table>
+
                 </div>
               </>
             )}
@@ -773,6 +836,18 @@ export default function Home() {
             </Link>
           </div>
         </section>
+
+        {/* Popup de sélection de service */}
+        {showServicePopup && (
+          <ServiceSelectionPopup
+            services={servicesList}
+            searchTerm={serviceSearchTerm}
+            onSearchChange={setServiceSearchTerm}
+            onSelect={handleServiceSelect}
+            onClose={() => setShowServicePopup(false)}
+            darkMode={darkMode}
+          />
+        )}
 
         <AjoutVisiteur 
           open={openAjout} 

@@ -18,11 +18,11 @@ export default function StatistiquesSuperAdmin() {
   const [monthlyData, setMonthlyData] = useState([]);
   const [weeklyData, setWeeklyData] = useState([]);
   const [dailyData, setDailyData] = useState([
-    { name: 'Lundi', visiteurs: 120 },
-    { name: 'Mardi', visiteurs: 150 },
-    { name: 'Mercredi', visiteurs: 120 },
-    { name: 'Jeudi', visiteurs:  100},
-    { name: 'Vendredi', visiteurs: 150 },
+    { name: 'Lundi', visiteurs: 120, visites: 180 },
+    { name: 'Mardi', visiteurs: 150, visites: 160 },
+    { name: 'Mercredi', visiteurs: 60, visites:70 },
+    { name: 'Jeudi', visiteurs: 100, visites: 160 },
+    { name: 'Vendredi', visiteurs: 150, visites: 210 },
   ]);
   const [monthlyLoading, setMonthlyLoading] = useState(true);
   const [weeklyLoading, setWeeklyLoading] = useState(true);
@@ -31,15 +31,34 @@ export default function StatistiquesSuperAdmin() {
   const [weeklyError, setWeeklyError] = useState(null);
   const [dailyError, setDailyError] = useState(null);
 
+  // Données locales simulées pour les visites
+  const localVisitsData = {
+    month: [
+      { mois: 'Janvier', visites: 3500 },
+      { mois: 'Février', visites: 4200 },
+      { mois: 'Mars', visites: 3800 },
+      { mois: 'Avril', visites: 4100 },
+      { mois: 'Mai', visites: 4500 },
+      { mois: 'Juin', visites: 3900 },
+    ],
+    week: [
+      { semaine: 'Semaine 1', visites: 850 },
+      { semaine: 'Semaine 2', visites: 920 },
+      { semaine: 'Semaine 3', visites: 780 },
+      { semaine: 'Semaine 4', visites: 950 },
+    ]
+  };
+
   // Fetch monthly data
   useEffect(() => {
     const fetchMonthlyData = async () => {
       try {
         setMonthlyLoading(true);
         const response = await axios.get('http://localhost:5000/visite/chartMois');
-        const formattedData = response.data.data.map(item => ({
+        const formattedData = response.data.data.map((item, index) => ({
           name: item.mois,
-          visiteurs: parseInt(item.nombre_visites)
+          visiteurs: parseInt(item.nombre_visites),
+          visites: localVisitsData.month[index]?.visites || 0
         }));
         setMonthlyData(formattedData);
         setMonthlyLoading(false);
@@ -59,9 +78,10 @@ export default function StatistiquesSuperAdmin() {
       try {
         setWeeklyLoading(true);
         const response = await axios.get('http://localhost:5000/visite/chartSemaine');
-        const formattedData = response.data.data.map(item => ({
+        const formattedData = response.data.data.map((item, index) => ({
           name: item.semaine,
-          visiteurs: parseInt(item.nombre_visites)
+          visiteurs: parseInt(item.nombre_visites),
+          visites: localVisitsData.week[index]?.visites || 0
         }));
         setWeeklyData(formattedData);
         setWeeklyLoading(false);
@@ -94,10 +114,10 @@ export default function StatistiquesSuperAdmin() {
       : dailyError;
       
   const chartTitle = timeRange === 'month' 
-    ? "Visiteurs par mois" 
+    ? "Statistiques par mois" 
     : timeRange === 'week' 
-      ? "Visiteurs par semaine" 
-      : "Visiteurs par jour (Lundi-Vendredi)";
+      ? "Statistiques par semaine" 
+      : "Statistiques par jour (Lundi-Vendredi)";
 
   if (currentLoading) {
     return (
@@ -140,13 +160,13 @@ export default function StatistiquesSuperAdmin() {
         darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-100 text-gray-900"
       }`}
     >
-      <h1 className="text-4xl font-bold mb-8">Statistiques Globales</h1>
+      <h1 className="text-2xl  mb-5">Statistiques Globales</h1>
 
       <div className={`rounded-xl shadow-lg p-6 mb-8 ${
         darkMode ? "bg-gray-800" : "bg-white"
       }`}>
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-semibold">{chartTitle}</h2>
+          <h2 className="text-1xl font-semibold">{chartTitle}</h2>
           <div className="flex space-x-2">
             <button
               onClick={() => setTimeRange('day')}
@@ -229,11 +249,21 @@ export default function StatistiquesSuperAdmin() {
                 marginBottom: "0.5rem",
                 color: darkMode ? "#fbbf24" : "#3b82f6",
               }}
-              formatter={(value) => [new Intl.NumberFormat('fr').format(value), "Visiteurs"]}
+              formatter={(value, name) => [
+                new Intl.NumberFormat('fr').format(value), 
+                name === 'visiteurs' ? 'Visiteurs uniques' : 'Nombre de visites'
+              ]}
+            />
+            <Legend 
+              wrapperStyle={{
+                paddingTop: '20px'
+              }}
+              formatter={(value) => value === 'visiteurs' ? 'Visiteurs uniques' : 'Nombre de visites'}
             />
             <Line
               type="monotone"
               dataKey="visiteurs"
+              name="visiteurs"
               stroke={darkMode ? "#fbbf24" : "#3b82f6"}
               strokeWidth={3}
               dot={{
@@ -249,6 +279,25 @@ export default function StatistiquesSuperAdmin() {
                 fill: darkMode ? "#333" : "#fff",
               }}
             />
+            <Line
+              type="monotone"
+              dataKey="visites"
+              name="visites"
+              stroke={darkMode ? "#10b981" : "#ef4444"}
+              strokeWidth={3}
+              dot={{
+                fill: darkMode ? "#10b981" : "#ef4444",
+                strokeWidth: 2,
+                r: 5,
+                stroke: darkMode ? "#333" : "#fff",
+              }}
+              activeDot={{
+                r: 8,
+                stroke: darkMode ? "#10b981" : "#ef4444",
+                strokeWidth: 2,
+                fill: darkMode ? "#333" : "#fff",
+              }}
+            />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -259,7 +308,7 @@ export default function StatistiquesSuperAdmin() {
         <div className={`rounded-xl shadow-lg p-6 ${
           darkMode ? "bg-gray-800" : "bg-white"
         }`}>
-          <h3 className="text-lg font-semibold mb-2">Visiteurs totaux</h3>
+          <h3 className="text-lg font-semibold mb-2">Visiteurs uniques totaux</h3>
           <p className="text-3xl font-bold text-blue-500 dark:text-yellow-500">
             {currentData.reduce((sum, item) => sum + item.visiteurs, 0).toLocaleString('fr')}
           </p>
@@ -267,17 +316,18 @@ export default function StatistiquesSuperAdmin() {
         <div className={`rounded-xl shadow-lg p-6 ${
           darkMode ? "bg-gray-800" : "bg-white"
         }`}>
-          <h3 className="text-lg font-semibold mb-2">Moyenne</h3>
-          <p className="text-3xl font-bold text-blue-500 dark:text-yellow-500">
-            {Math.round(currentData.reduce((sum, item) => sum + item.visiteurs, 0) / currentData.length || 0).toLocaleString('fr')}
+          <h3 className="text-lg font-semibold mb-2">Visites totales</h3>
+          <p className="text-3xl font-bold text-green-500 dark:text-green-400">
+            {currentData.reduce((sum, item) => sum + item.visites, 0).toLocaleString('fr')}
           </p>
         </div>
         <div className={`rounded-xl shadow-lg p-6 ${
           darkMode ? "bg-gray-800" : "bg-white"
         }`}>
-          <h3 className="text-lg font-semibold mb-2">Pic de visiteurs</h3>
-          <p className="text-3xl font-bold text-blue-500 dark:text-yellow-500">
-            {Math.max(...currentData.map(item => item.visiteurs), 0).toLocaleString('fr')}
+          <h3 className="text-lg font-semibold mb-2">Ratio visites/visiteurs</h3>
+          <p className="text-3xl font-bold text-purple-500 dark:text-purple-400">
+            {(currentData.reduce((sum, item) => sum + item.visites, 0) / 
+              currentData.reduce((sum, item) => sum + item.visiteurs, 1)).toFixed(1)}
           </p>
         </div>
       </div>

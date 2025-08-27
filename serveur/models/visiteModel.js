@@ -118,6 +118,13 @@ export async function SelectAllVisite() {
     return result.rows;
 }
 
+export async function SelectAllVisitePersonne() {
+    const result= await pool.query(
+        "SELECT vis.id_visitepersonne , v.nom , v.prenom , vis.date_p, vis.heure_arrivee, vis.heure_depart , p.nom_agent FROM visites_personne vis JOIN visiteurs v ON v.id_visiteur=vis.id_visiteur JOIN agent p ON p.id_agent=vis.id_agent ORDER BY vis.date_p DESC, vis.heure_arrivee DESC;"
+    );
+    return result.rows;
+}
+
 //        Statisitque 
 // *Tableau ACCUEI  visite en cours
 
@@ -218,5 +225,6 @@ export async function  SuperChartMois() {
     const result= await pool.query("SELECT l.nom_lieu as nom, COUNT(v.id_visitelieu) as nombre_visites FROM visites_lieu v JOIN lieu l ON v.id_lieu = l.id_lieu WHERE v.date >= date_trunc('month', CURRENT_DATE) AND v.date < date_trunc('month', CURRENT_DATE) + interval '1 month' GROUP BY l.nom_lieu ORDER BY nombre_visites DESC;" );
     return result.rows;
 }
+
 
 

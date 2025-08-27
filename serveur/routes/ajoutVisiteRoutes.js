@@ -1,5 +1,5 @@
 import express from 'express';
-import { createVisiteController, SuperChartMoisControlleur, SuperChartSemaineControlleur } from '../controllers/ajoutVisiteurController.js';
+import { createVisiteController, getAllVisitePersonneController, SuperChartMoisControlleur, SuperChartSemaineControlleur } from '../controllers/ajoutVisiteurController.js';
 import { ajoutVisitePersonne } from '../controllers/ajoutVisiteurController.js';
 import { visiteterminerControlleur } from '../controllers/ajoutVisiteurController.js';
 import { visitePersonneTerminerController } from '../controllers/ajoutVisiteurController.js';
@@ -29,6 +29,7 @@ router.put('/visitePersonneTerminer/:id', visitePersonneTerminerController);
 router.put('/updateVisiteLieu', updateVisiteLieuControlleur);
 router.get('/listeVisiteur', getAllVisiteursController);
 router.get('/listeVisite', getAllVisiteLieuController);
+router.get('/listeVisitePersonne', getAllVisitePersonneController);
 router.get('/listeVisiteNotLieu', AllVisiteLieuControlleur);
 router.get('/listeVisiteNotPersonne', AllVisitePersonneControlleur);
 router.get('/nombreVisiteEncours', CountVisiteEncoursControlleur);
