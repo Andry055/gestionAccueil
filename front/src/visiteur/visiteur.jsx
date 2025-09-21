@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import VisiteListPopup from "./listeVisite";
-import { NotebookText, Edit2, UserPlus2, Search, RefreshCw, X, History } from "lucide-react";
+import { NotebookText, Edit2, UserPlus2, Search, RefreshCw, X, History, ChevronUp, ChevronDown } from "lucide-react";
 import AjoutVisiteur from "./ajoutvisiteur";
 import AjoutVisite from "./ajoutVisite";
 import { useDarkMode } from "../utils/DarkModeContext";
@@ -9,8 +9,7 @@ import axios from "axios";
 
 export default function Visiteur() {
   const { darkMode } = useDarkMode();
-  const navigate= useNavigate();
-
+  const navigate = useNavigate();
 
   // États
   const [visites, setVisites] = useState([]);
@@ -28,6 +27,9 @@ export default function Visiteur() {
     cin: "",
     agent: ""
   });
+  const [tri, setTri] = useState({ colonne: null, ordre: 'asc' });
+  const [pageCourante, setPageCourante] = useState(1);
+  const [visiteursParPage] = useState(20);
 
   // Chargement des visiteurs
   useEffect(() => {
@@ -52,6 +54,48 @@ export default function Visiteur() {
     };
     chargerVisiteurs();
   }, []);
+
+  // Fonction de tri
+  const trierVisiteurs = (colonne) => {
+    let nouvelOrdre = 'asc';
+    
+    if (tri.colonne === colonne && tri.ordre === 'asc') {
+      nouvelOrdre = 'desc';
+    }
+    
+    setTri({ colonne, ordre: nouvelOrdre });
+    
+    const visiteursTries = [...visites].sort((a, b) => {
+      if (colonne === 'id') {
+        return nouvelOrdre === 'asc' ? a.id_visiteur - b.id_visiteur : b.id_visiteur - a.id_visiteur;
+      } else if (colonne === 'nom') {
+        return nouvelOrdre === 'asc' 
+          ? (a.nom || '').localeCompare(b.nom || '') 
+          : (b.nom || '').localeCompare(a.nom || '');
+      } else if (colonne === 'prenom') {
+        return nouvelOrdre === 'asc' 
+          ? (a.prenom || '').localeCompare(b.prenom || '') 
+          : (b.prenom || '').localeCompare(a.prenom || '');
+      } else if (colonne === 'cin') {
+        return nouvelOrdre === 'asc' 
+          ? (a.cin || '').localeCompare(b.cin || '') 
+          : (b.cin || '').localeCompare(a.cin || '');
+      } else if (colonne === 'agent') {
+        return nouvelOrdre === 'asc' 
+          ? (a.nom_agent || '').localeCompare(b.nom_agent || '') 
+          : (b.nom_agent || '').localeCompare(a.nom_agent || '');
+      }
+      return 0;
+    });
+    
+    setVisites(visiteursTries);
+  };
+
+  // Fonction pour obtenir l'indicateur de tri
+  const getIndicateurTri = (colonne) => {
+    if (tri.colonne !== colonne) return null;
+    return tri.ordre === 'asc' ? <ChevronUp size={16} /> : <ChevronDown size={16} />;
+  };
 
   // Modification d'un visiteur
   const mettreAJourVisiteur = async () => {
@@ -94,9 +138,18 @@ export default function Visiteur() {
     });
   }, [visites, filtres]);
 
+  // Pagination
+  const indexDernierVisiteur = pageCourante * visiteursParPage;
+  const indexPremierVisiteur = indexDernierVisiteur - visiteursParPage;
+  const visiteursCourants = visiteursFiltres.slice(indexPremierVisiteur, indexDernierVisiteur);
+  const totalPages = Math.ceil(visiteursFiltres.length / visiteursParPage);
+
+  const paginer = (pageNumber) => setPageCourante(pageNumber);
+
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFiltres(prev => ({ ...prev, [name]: value }));
+    setPageCourante(1); // Réinitialiser à la première page lors du filtrage
   };
 
   const resetFilters = () => {
@@ -107,9 +160,59 @@ export default function Visiteur() {
       cin: "",
       agent: ""
     });
+    setPageCourante(1);
   };
 
   const hasActiveFilters = Object.values(filtres).some(val => val !== "");
+
+  // Générer les numéros de page à afficher
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      // Toujours afficher la première page
+      pageNumbers.push(1);
+      
+      // Calculer le début et la fin de la plage de pages à afficher
+      let startPage = Math.max(2, pageCourante - 1);
+      let endPage = Math.min(totalPages - 1, pageCourante + 1);
+      
+      // Ajuster si on est près du début
+      if (pageCourante <= 3) {
+        endPage = 4;
+      }
+      
+      // Ajuster si on est près de la fin
+      if (pageCourante >= totalPages - 2) {
+        startPage = totalPages - 3;
+      }
+      
+      // Ajouter les points de suspension si nécessaire
+      if (startPage > 2) {
+        pageNumbers.push('...');
+      }
+      
+      // Ajouter les pages intermédiaires
+      for (let i = startPage; i <= endPage; i++) {
+        pageNumbers.push(i);
+      }
+      
+      // Ajouter les points de suspension si nécessaire
+      if (endPage < totalPages - 1) {
+        pageNumbers.push('...');
+      }
+      
+      // Toujours afficher la dernière page
+      pageNumbers.push(totalPages);
+    }
+    
+    return pageNumbers;
+  };
 
   // Styles
   const styles = {
@@ -127,7 +230,9 @@ export default function Visiteur() {
       : "bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-200",
     statCard: darkMode 
       ? "bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700" 
-      : "bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200"
+      : "bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200",
+    pageButtonStyle: darkMode ? "bg-gray-700 text-gray-200 hover:bg-gray-600" : "bg-white text-gray-700 hover:bg-gray-100",
+    activePageButtonStyle: darkMode ? "bg-indigo-600 text-white" : "bg-indigo-600 text-white"
   };
 
   if (chargement) {
@@ -184,7 +289,7 @@ export default function Visiteur() {
                 </button>
               )}
               <button
-                onClick={() => navigate('/visite')} // À adapter selon votre routeur
+                onClick={() => navigate('/visite')}
                 className={`px-4 py-2.5 rounded-lg flex items-center gap-2 ${styles.boutonSecondaire} transition-all hover:scale-105`}
               >
                 <History size={18} />
@@ -281,16 +386,33 @@ export default function Visiteur() {
                   <table className="w-full min-w-max">
                     <thead className={`${styles.tableHead} sticky top-0 z-10`}>
                       <tr>
-                        <th className="px-6 py-4 text-left font-medium">ID</th>
-                        <th className="px-6 py-4 text-left font-medium">Nom</th>
-                        <th className="px-6 py-4 text-left font-medium">Prénom</th>
-                        <th className="px-6 py-4 text-left font-medium">CIN</th>
-                        <th className="px-6 py-4 text-left font-medium">Agent</th>
-                        <th className="px-6 py-4 text-right font-medium">Actions</th>
+                        {[
+                          { label: "ID", key: "id" },
+                          { label: "Nom", key: "nom" },
+                          { label: "Prénom", key: "prenom" },
+                          { label: "CIN", key: "cin" },
+                          { label: "Agent", key: "agent" },
+                          { label: "Actions", key: "actions" }
+                        ].map(({ label, key }) => (
+                          <th
+                            key={key}
+                            className={`px-6 py-4 text-left font-medium ${
+                              key !== 'actions' ? 'cursor-pointer hover:bg-blue-300 dark:hover:bg-gray-700' : ''
+                            }`}
+                            onClick={() => key !== 'actions' && trierVisiteurs(key)}
+                          >
+                            <div className="flex items-center">
+                              {label}
+                              {key !== 'actions' && (
+                                <span className="ml-1">{getIndicateurTri(key)}</span>
+                              )}
+                            </div>
+                          </th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                      {visiteursFiltres.length === 0 ? (
+                      {visiteursCourants.length === 0 ? (
                         <tr>
                           <td colSpan={6} className="px-6 py-8 text-center">
                             <div className="flex flex-col items-center justify-center">
@@ -312,7 +434,7 @@ export default function Visiteur() {
                           </td>
                         </tr>
                       ) : (
-                        visiteursFiltres.map((visiteur) => (
+                        visiteursCourants.map((visiteur) => (
                           <tr 
                             key={visiteur.id_visiteur} 
                             className={`${styles.tableRowHover} transition-colors`}
@@ -363,6 +485,57 @@ export default function Visiteur() {
                   </table>
                 </div>
               </div>
+
+              {/* Pagination */}
+              {visiteursFiltres.length > visiteursParPage && (
+                <div className="flex flex-col md:flex-row items-center justify-between p-4 border-t border-gray-200 dark:border-gray-700">
+                  <div className={`text-sm mb-4 md:mb-0 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Affichage des visiteurs {indexPremierVisiteur + 1} à {Math.min(indexDernierVisiteur, visiteursFiltres.length)} sur {visiteursFiltres.length}
+                  </div>
+                  
+                  <nav className="flex items-center space-x-2">
+                    {/* Bouton Précédent */}
+                    <button
+                      onClick={() => paginer(pageCourante - 1)}
+                      disabled={pageCourante === 1}
+                      className={`px-3 py-1 rounded-md border ${styles.pageButtonStyle} ${
+                        pageCourante === 1 ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                    >
+                      Précédent
+                    </button>
+
+                    {/* Numéros de page */}
+                    {getPageNumbers().map((pageNumber, index) => (
+                      <button
+                        key={index}
+                        onClick={() => typeof pageNumber === 'number' && paginer(pageNumber)}
+                        className={`px-3 py-1 rounded-md border ${
+                          pageNumber === pageCourante 
+                            ? styles.activePageButtonStyle 
+                            : styles.pageButtonStyle
+                        } ${
+                          pageNumber === '...' ? 'cursor-default' : ''
+                        }`}
+                        disabled={pageNumber === '...'}
+                      >
+                        {pageNumber}
+                      </button>
+                    ))}
+
+                    {/* Bouton Suivant */}
+                    <button
+                      onClick={() => paginer(pageCourante + 1)}
+                      disabled={pageCourante === totalPages}
+                      className={`px-3 py-1 rounded-md border ${styles.pageButtonStyle} ${
+                        pageCourante === totalPages ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                    >
+                      Suivant
+                    </button>
+                  </nav>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -440,15 +613,15 @@ export default function Visiteur() {
               </button>
               <button
                 onClick={mettreAJourVisiteur}
-                disabled={chargement}
-                className={`px-4 py-2 rounded-lg ${styles.boutonPrimaire} ${chargement ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                {chargement ? 'Enregistrement...' : 'Enregistrer'}
-              </button>
+                    disabled={chargement}
+                    className={`px-4 py-2 rounded-lg ${styles.boutonPrimaire} ${chargement ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {chargement ? 'Enregistrement...' : 'Enregistrer'}
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
-      )}
-    </div>
   );
 }

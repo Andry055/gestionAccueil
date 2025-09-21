@@ -21,24 +21,18 @@ export default function Login() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, password }),
     });
-
     const data = await response.json();
-
     if (response.ok) {
       setError("");
       setShowModal(true);
-
       login(data.name, data.role, data.token);
-      // après un login réussi
-
-
       setTimeout(() => {
         setShowModal(false);
         if (data.role === "admin") navigate("/home");
         else if (data.role === "superadmin") navigate("/superAdmin_dahsboard");
         else navigate("/");
       }, 2000);
-      localStorage.setItem("userRole", data.role); // par ex. "admin" ou "superadmin"
+      localStorage.setItem("userRole", data.role);
     } else {
       setShowModal(false);
       setError(data.message || "Erreur de connexion");

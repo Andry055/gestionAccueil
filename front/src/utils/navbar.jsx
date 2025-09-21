@@ -40,7 +40,7 @@ export default function Navbar() {
         <div className="flex items-center">
           <img src="/logo-mtefop.png" alt="logo" className="h-10 w-auto" />
           <p className={`pl-2 italic text-2xl ${darkMode ? "text-gray-100" : "text-gray-800"}`}>
-            Gestion des Visiteurs
+          Collecte et suivi des visiteurs 
           </p>
         </div>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   CalendarDaysIcon,
   BuildingOffice2Icon,
@@ -10,7 +10,9 @@ import {
   FunnelIcon,
   ChevronDownIcon,
   CheckIcon,
-  ExclamationCircleIcon
+  ExclamationCircleIcon,
+  XMarkIcon,
+  ArrowDownTrayIcon
 } from '@heroicons/react/24/outline';
 import { useDarkMode } from "../utils/DarkModeContext";
 import { 
@@ -22,6 +24,8 @@ import {
   Tooltip
 } from 'recharts';
 import axios from 'axios';
+import { toPng } from 'html-to-image';
+import jsPDF from 'jspdf';
 
 export default function SuperAdminDashboard() {
   const { darkMode } = useDarkMode();
@@ -30,6 +34,13 @@ export default function SuperAdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [customDateModal, setCustomDateModal] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [exporting, setExporting] = useState(false);
+  const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false);
+  
+  const chartRef = useRef(null);
 
   // Calcul des totaux
   const totalVisites = chartData.reduce((sum, item) => sum + item.value, 0);
@@ -43,15 +54,20 @@ export default function SuperAdminDashboard() {
     try {
       setLoading(true);
       let endpoint = '';
+      let params = {};
       
       switch(timeRange) {
         case 'today': endpoint = 'superChartJour'; break;
         case 'week': endpoint = 'superChartSemaine'; break;
         case 'month': endpoint = 'superChartMois'; break;
+        case 'custom': 
+          endpoint = 'superChartPersonnalise';
+          params = { date_debut: startDate, date_fin: endDate };
+          break;
         default: endpoint = 'superChartJour';
       }
 
-      const response = await axios.get(`http://localhost:5000/visite/${endpoint}`);
+      const response = await axios.get(`http://localhost:5000/visite/${endpoint}`, { params });
       
       if (response.data.message.includes("reussi")) {
         const formattedData = response.data.data.map(item => ({
@@ -77,6 +93,88 @@ export default function SuperAdminDashboard() {
     }
   };
 
+  // Appliquer les dates personnalisées
+  const handleCustomDateApply = () => {
+    if (startDate && endDate) {
+      if (new Date(startDate) > new Date(endDate)) {
+        setError("La date de début doit être antérieure à la date de fin");
+        return;
+      }
+      setTimeRange('custom');
+      setCustomDateModal(false);
+      fetchChartData();
+    } else {
+      setError("Veuillez sélectionner les deux dates");
+    }
+  };
+
+  // Exporter le graphique en image
+  const exportChartAsImage = async () => {
+    if (!chartRef.current) return;
+    
+    setExporting(true);
+    try {
+      const dataUrl = await toPng(chartRef.current, { 
+        backgroundColor: darkMode ? '#111827' : '#ffffff',
+        quality: 1.0 
+      });
+      
+      const link = document.createElement('a');
+      link.download = `statistiques-visites-${timeRange}-${new Date().toISOString().slice(0, 10)}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error("Erreur lors de l'export:", err);
+      setError("Erreur lors de l'exportation");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // Exporter le graphique en PDF
+  const exportChartAsPDF = async () => {
+    if (!chartRef.current) return;
+    
+    setExporting(true);
+    try {
+      const dataUrl = await toPng(chartRef.current, { 
+        backgroundColor: darkMode ? '#111827' : '#ffffff',
+        quality: 1.0 
+      });
+      
+      const pdf = new jsPDF('landscape', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      // Ajouter un titre
+      pdf.setFontSize(16);
+      pdf.text('Statistiques des visites', pdfWidth / 2, 15, { align: 'center' });
+      
+      // Ajouter la période
+      pdf.setFontSize(12);
+      pdf.text(`Période: ${getTimeRangeLabel()}`, pdfWidth / 2, 22, { align: 'center' });
+      
+      // Ajouter l'image du graphique
+      const imgProps = pdf.getImageProperties(dataUrl);
+      const imgWidth = pdfWidth - 40; // marges de 20mm de chaque côté
+      const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+      
+      pdf.addImage(dataUrl, 'PNG', 20, 30, imgWidth, imgHeight);
+      
+      // Ajouter les totaux
+      pdf.setFontSize(10);
+      pdf.text(`Total des visites: ${totalVisites} | Services visités: ${totalServices}`, pdfWidth / 2, pdfHeight - 10, { align: 'center' });
+      
+      // Sauvegarder le PDF
+      pdf.save(`statistiques-visites-${timeRange}-${new Date().toISOString().slice(0, 10)}.pdf`);
+    } catch (err) {
+      console.error("Erreur lors de l'export PDF:", err);
+      setError("Erreur lors de l'exportation PDF");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   // Filtre les données
   const filteredData = searchTerm 
     ? chartData.filter(item => 
@@ -97,12 +195,14 @@ export default function SuperAdminDashboard() {
   const counterBg = darkMode ? "bg-gray-700" : "bg-indigo-50";
   const inputBg = darkMode ? "bg-gray-700 text-white border-gray-600" : "bg-white text-gray-900 border-gray-300";
   const dropdownBg = darkMode ? "bg-gray-700 border-gray-600" : "bg-white border-gray-200";
+  const modalBg = darkMode ? "bg-gray-800" : "bg-white";
 
   const getTimeRangeLabel = () => {
     switch(timeRange) {
       case 'today': return "Aujourd'hui";
       case 'week': return "Cette semaine";
       case 'month': return "Ce mois";
+      case 'custom': return `Personnalisé (${startDate} au ${endDate})`;
       default: return "";
     }
   };
@@ -113,7 +213,8 @@ export default function SuperAdminDashboard() {
     const options = [
       { value: 'today', label: 'Aujourd\'hui', icon: <ClockIcon className="h-4 w-4" /> },
       { value: 'week', label: 'Cette semaine', icon: <CalendarDaysIcon className="h-4 w-4" /> },
-      { value: 'month', label: 'Ce mois', icon: <ChartPieIcon className="h-4 w-4" /> }
+      { value: 'month', label: 'Ce mois', icon: <ChartPieIcon className="h-4 w-4" /> },
+      { value: 'custom', label: 'Personnalisé', icon: <CalendarDaysIcon className="h-4 w-4" /> }
     ];
 
     const selectedOption = options.find(opt => opt.value === timeRange);
@@ -135,8 +236,13 @@ export default function SuperAdminDashboard() {
               <button
                 key={option.value}
                 onClick={() => {
-                  setTimeRange(option.value);
-                  setIsOpen(false);
+                  if (option.value === 'custom') {
+                    setCustomDateModal(true);
+                    setIsOpen(false);
+                  } else {
+                    setTimeRange(option.value);
+                    setIsOpen(false);
+                  }
                 }}
                 className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 hover:bg-indigo-500 hover:text-white ${
                   timeRange === option.value 
@@ -309,6 +415,45 @@ export default function SuperAdminDashboard() {
                     </div>
                     
                     <TimeRangeDropdown />
+                    
+                    {/* Bouton d'exportation */}
+                    <div className="relative group">
+                        <button
+                          onClick={() => setIsExportDropdownOpen(!isExportDropdownOpen)}
+                          disabled={exporting}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm border ${borderColor} ${dropdownBg} ${textPrimary} ${exporting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-50'}`}
+                        >
+                          <ArrowDownTrayIcon className="h-4 w-4" />
+                          Exporter
+                          <ChevronDownIcon className="h-4 w-4" />
+                        </button>
+                        
+                        {/* Menu déroulant pour les options d'exportation */}
+                        {isExportDropdownOpen && (
+                          <div className={`absolute z-10 mt-1 right-0 w-40 rounded-md shadow-lg ${dropdownBg} border ${borderColor}`}>
+                            <button
+                              onClick={() => {
+                                exportChartAsImage();
+                                setIsExportDropdownOpen(false);
+                              }}
+                              disabled={exporting}
+                              className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 hover:bg-indigo-500 hover:text-white ${textPrimary}`}
+                            >
+                              <span>En image (PNG)</span>
+                            </button>
+                            <button
+                              onClick={() => {
+                                exportChartAsPDF();
+                                setIsExportDropdownOpen(false);
+                              }}
+                              disabled={exporting}
+                              className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 hover:bg-indigo-500 hover:text-white ${textPrimary}`}
+                            >
+                              <span>En PDF</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
                   </div>
                 </div>
 
@@ -329,7 +474,7 @@ export default function SuperAdminDashboard() {
                     </button>
                   </div>
                 ) : (
-                  <div className="h-72">
+                  <div className="h-72" ref={chartRef}>
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -397,6 +542,72 @@ export default function SuperAdminDashboard() {
           </div>
         </div>
       </main>
+
+      {/* Modal pour les dates personnalisées */}
+      {customDateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className={`rounded-lg shadow-xl max-w-md w-full p-5 ${modalBg} ${borderColor} border`}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className={`text-lg font-semibold ${textPrimary}`}>
+                Période personnalisée
+              </h3>
+              <button 
+                onClick={() => setCustomDateModal(false)}
+                className={`p-1 rounded-full ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'}`}
+              >
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${textPrimary}`}>
+                  Date de début
+                </label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className={`w-full p-2 rounded border ${inputBg} ${borderColor}`}
+                />
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${textPrimary}`}>
+                  Date de fin
+                </label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className={`w-full p-2 rounded border ${inputBg} ${borderColor}`}
+                />
+              </div>
+              
+              {error && (
+                <div className={`p-2 rounded text-sm ${darkMode ? 'bg-red-900 text-red-200' : 'bg-red-100 text-red-800'}`}>
+                  {error}
+                </div>
+              )}
+            </div>
+            
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                onClick={() => setCustomDateModal(false)}
+                className={`px-4 py-2 rounded text-sm ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} ${textPrimary}`}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleCustomDateApply}
+                className="px-4 py-2 rounded text-sm bg-indigo-600 text-white hover:bg-indigo-700"
+              >
+                Appliquer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
