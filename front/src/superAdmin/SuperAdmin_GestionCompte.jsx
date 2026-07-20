@@ -190,7 +190,7 @@ const GestionComptes = () => {
 
   return (
     <div className={`min-h-screen pt-24 px-4 md:px-10 transition-all duration-300 ${bgMain}`}>
-      <h1 className="text-4xl font-extrabold mb-7 ml-2 md:ml-6">Gestion des comptes Agents</h1>
+      <h1 className="text-3xl font-bold mb-7 ml-2 md:ml-6">Gestion des comptes Agents</h1>
 
       {loading ? (
         <div className="flex justify-center items-center h-64">

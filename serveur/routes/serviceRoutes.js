@@ -1,5 +1,5 @@
 import express from 'express';
-import { createServiceControlleur, SelectAllUsersController } from '../controllers/ajoutServiceControlleur.js';
+import {  SelectAllUsersController } from '../controllers/ajoutServiceControlleur.js';
 import { updateServiceController } from '../controllers/ajoutServiceControlleur.js';
 import { DeleteServiceController } from '../controllers/ajoutServiceControlleur.js';
 import { SelectAllServiceControlleur } from '../controllers/ajoutServiceControlleur.js';
@@ -10,9 +10,11 @@ import { getTopServicesController } from '../controllers/ajoutServiceControlleur
 import { UpdateUsersController } from '../controllers/ajoutServiceControlleur.js';
 import { DelelteUsersControlleur } from '../controllers/ajoutServiceControlleur.js';
 
+import { createServiceControlleur } from '../controllers/ajoutServiceControlleur.js';
 const router = express.Router();
 
 router.post('/ajoutservice', createServiceControlleur);
+
 router.put('/updateService/:id', updateServiceController);
 router.post('/suprimerService', DeleteServiceController);
 router.get('/listeService', SelectAllServiceControlleur);

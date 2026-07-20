@@ -406,8 +406,8 @@ export default function Home() {
 
   // Styles
   const bgMain = darkMode ? "bg-gray-900" : "bg-gray-50";
-  const textPrimary = darkMode ? "text-gray-100" : "text-gray-900";
-  const textSecondary = darkMode ? "text-gray-300" : "text-gray-600";
+  const textPrimary = darkMode ? "text-gray-100" : "text-gray-950";
+  const textSecondary = darkMode ? "text-gray-300" : "text-gray-900";
   const tableHead = darkMode ? "bg-gray-700 text-gray-200" : "bg-blue-200 text-blue-800";
   const tableRowHover = darkMode ? "hover:bg-gray-800" : "hover:bg-indigo-50";
   const cardBg = darkMode ? "bg-gray-800" : "bg-white";
@@ -461,7 +461,7 @@ export default function Home() {
                       : "bg-blue-500 text-white border-b-2 border-blue-400" 
                     : darkMode 
                       ? "bg-gray-700 text-gray-300 hover:bg-gray-600" 
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+                      : "bg-gray-100 text-gray-900 hover:bg-gray-200"}`}
                 onClick={() => setMode("visiteurs")}
               >
                 Visiteurs en cours
@@ -474,7 +474,7 @@ export default function Home() {
                       : "bg-blue-600 text-white border-b-2 border-blue-400" 
                     : darkMode 
                       ? "bg-gray-700 text-gray-300 hover:bg-gray-600" 
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+                      : "bg-gray-100 text-gray-900 hover:bg-gray-200"}`}
                 onClick={() => setMode("services")}
               >
                 Services (Nb visiteurs)
@@ -805,10 +805,10 @@ export default function Home() {
             <button 
               onClick={() => setOpenAjout(true)} 
               className={`w-full rounded-lg shadow-sm p-3 flex items-center gap-3 border text-sm font-medium
-                ${darkMode ? "bg-gray-800 border-gray-700 hover:bg-gray-700 text-gray-200" : "bg-white border-gray-200 hover:bg-blue-50 text-gray-800"}`}
+                ${darkMode ? "bg-gray-800 border-gray-700 hover:bg-gray-700 text-gray-200" : "bg-green-500 border-gray-200 hover:bg-green-500 text-gray-100"}`}
             >
-              <div className={`p-2 rounded-full ${darkMode ? "bg-gray-700" : "bg-blue-100"}`}>
-                <UserIcon className={`h-5 w-5 ${darkMode ? "text-amber-400" : "text-blue-600"}`} />
+              <div className={`p-2 rounded-full ${darkMode ? "bg-gray-700" : "bg-green-200"}`}>
+                <UserIcon className={`h-5 w-5 ${darkMode ? "text-amber-400" : "text-green-600"}`} />
               </div>
               <span>Nouveau visiteur</span>
             </button>
@@ -816,7 +816,7 @@ export default function Home() {
             <Link 
               to="/service" 
               className={`w-full rounded-lg shadow-sm p-3 flex items-center gap-3 border text-sm font-medium
-                ${darkMode ? "bg-gray-800 border-gray-700 hover:bg-gray-700 text-gray-200" : "bg-white border-gray-200 hover:bg-blue-50 text-gray-800"}`}
+                ${darkMode ? "bg-gray-800 border-gray-700 hover:bg-gray-700 text-gray-200" : "bg-blue-300 border-gray-200 hover:bg-blue-50 text-gray-800"}`}
             >
               <div className={`p-2 rounded-full ${darkMode ? "bg-gray-700" : "bg-blue-100"}`}>
                 <Cog6ToothIcon className={`h-5 w-5 ${darkMode ? "text-amber-400" : "text-blue-600"}`} />
@@ -827,7 +827,7 @@ export default function Home() {
             <Link 
               to="/visite" 
               className={`w-full rounded-lg shadow-sm p-3 flex items-center gap-3 border text-sm font-medium
-                ${darkMode ? "bg-gray-800 border-gray-700 hover:bg-gray-700 text-gray-200" : "bg-white border-gray-200 hover:bg-blue-50 text-gray-800"}`}
+                ${darkMode ? "bg-gray-800 border-gray-700 hover:bg-gray-700 text-gray-200" : "bg-blue-300 border-gray-200 hover:bg-blue-50 text-gray-800"}`}
             >
               <div className={`p-2 rounded-full ${darkMode ? "bg-gray-700" : "bg-blue-100"}`}>
                 <DocumentTextIcon className={`h-5 w-5 ${darkMode ? "text-amber-400" : "text-blue-600"}`} />

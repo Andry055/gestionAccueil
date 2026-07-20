@@ -189,8 +189,8 @@ export default function SuperAdminDashboard() {
   const bgMain = darkMode ? "bg-gray-900" : "bg-gray-50";
   const textPrimary = darkMode ? "text-gray-100" : "text-gray-900";
   const textSecondary = darkMode ? "text-gray-300" : "text-gray-600";
-  const cardBg = darkMode ? "bg-gray-800" : "bg-white";
-  const borderColor = darkMode ? "border-gray-700" : "border-gray-200";
+  const cardBg = darkMode ? "bg-gray-800" : "bg-gray-50";
+  const borderColor = darkMode ? "border-gray-700" : "border-2 border-gray-400";
   const highlightColor = darkMode ? "text-indigo-400" : "text-indigo-600";
   const counterBg = darkMode ? "bg-gray-700" : "bg-indigo-50";
   const inputBg = darkMode ? "bg-gray-700 text-white border-gray-600" : "bg-white text-gray-900 border-gray-300";
@@ -292,7 +292,7 @@ export default function SuperAdminDashboard() {
             <div className="lg:col-span-1">
               <div className="grid grid-cols-1 gap-4">
                 {/* Carte Visites */}
-                <div className={`rounded-lg shadow-sm border ${borderColor} ${cardBg} p-4`}>
+                <div className={`rounded-lg shadow-sm border  ${borderColor} ${cardBg} p-4`}>
                   <div className="flex items-center justify-between">
                     <div>
                       <p className={`text-xs font-medium ${textSecondary} flex items-center gap-1`}>
