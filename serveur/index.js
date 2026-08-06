@@ -5,6 +5,7 @@ import authRoutes from './routes/authRoutes.js';
 import { register } from './controllers/registerController.js';
 import visiteRoutes from './routes/ajoutVisiteRoutes.js';
 import Service from './routes/serviceRoutes.js'
+import aiRoutes from './routes/aiRoutes.js'
 
 dotenv.config();
 
@@ -25,6 +26,7 @@ app.use('/service',Service);
 app.use('/visite', visiteRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/register', register);
+app.use('/api/ai', aiRoutes);
 
 // Lancement du serveur
 app.listen(PORT, () => {

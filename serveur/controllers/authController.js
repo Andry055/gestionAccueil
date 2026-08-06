@@ -12,7 +12,14 @@ export async function login(req, res) {
     if (!passwordMatch) return res.status(401).json({error:"Mot de passe incorrect"});
     
     const token =generateToken(user);
-    res.status(200).json({message:"Connexion réussie",token,name:user.nom_accueil,role:user.role});
+    res.status(200).json({
+      message:"Connexion réussie",
+      token,
+      username:user.nom_accueil,
+      prenom:user.prenom_accueil,
+      role:user.role,
+      tel:user.tel
+    });
     
   }
   catch(err){

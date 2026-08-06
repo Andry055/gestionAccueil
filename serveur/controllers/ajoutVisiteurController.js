@@ -1,4 +1,5 @@
-import { findVisitorCin, createVisiteur, createVisiteService, findServiceId, findPersonneId, updateVisiteur, updateVisitelieu, SelectAllVisiteur, SelectAllVisite, SelectAllVisiteNotLieu, SelectAllVisiteNotPersonne, countVisiteEncours, countVisitePersonneEncours, CountVisiteurLieuNow, CountVisiteurPersonneNow, selectAllVisiteForId, selectIdVisiteur, updateVisiteurWithoutCin, updateVisitelieuNom, selectIdVisiteurForVisitePersonne, updateVisitePersonne, updateVisitePersonneNom, chartMois, chartSemaine, SuperChartJour, SuperChartSemaine, SelectAllVisitePersonne } from "../models/visiteModel.js";
+import { findVisitorCin, createVisiteur, createVisiteService, findServiceId, findPersonneId, updateVisiteur, updateVisitelieu, SelectAllVisiteur, SelectAllVisite, SelectAllVisiteNotLieu, SelectAllVisiteNotPersonne, countVisiteEncours, countVisitePersonneEncours, CountVisiteurLieuNow, CountVisiteurPersonneNow, CountServiceNow, selectAllVisiteForId, selectIdVisiteur, updateVisiteurWithoutCin, updateVisitelieuNom, selectIdVisiteurForVisitePersonne, updateVisitePersonne, updateVisitePersonneNom, chartMois, chartSemaine, SuperChartJour, SuperChartSemaine, SelectAllVisitePersonne, updateVisiteurAgent } from "../models/visiteModel.js";
+import { SelectAllService } from "../models/lieuModel.js";
 import { visiteTerminer, createPersonne , createVisitePersonne , visitePersonneTerminer} from "../models/visiteModel.js";
 import { SuperChartMois } from "../models/visiteModel.js";
 
@@ -12,6 +13,9 @@ export async function createVisiteController(req, res) {
         // Si le visiteur n'existe pas, le créer
         if (!visiteur) {
             visiteur = await createVisiteur(nom, prenom, cin, nomAgent);
+        } else if (nomAgent) {
+            // Mettre à jour le nom de l'agent pour le suivi
+            await updateVisiteurAgent(visiteur.id_visiteur, nomAgent);
         }
 
         // Trouver le service
@@ -83,6 +87,8 @@ export async function ajoutVisitePersonne(req, res) {
         let visiteur= await findVisitorCin(cin);
         if (!visiteur) {
             visiteur = await createVisiteur(nom, prenom, cin, nomAgent);
+        } else if (nomAgent) {
+            await updateVisiteurAgent(visiteur.id_visiteur, nomAgent);
         }
         let agent = await findPersonneId(personneVisite);
         if (!agent){
@@ -344,5 +350,27 @@ export async function SuperChartMoisControlleur(req, res) {
     catch(err){
         console.error(err);
         res.status(500).json({error:"problème de recuperation "});
+    }
+}
+
+// Stats dashboard accueil
+export async function getStatsController(req, res) {
+    try {
+        const [totalVisiteursLieu, totalVisiteursPersonne, visitesEncoursLieu, visitesEncoursPersonne, services] = await Promise.all([
+            CountVisiteurLieuNow(),
+            CountVisiteurPersonneNow(),
+            countVisiteEncours(),
+            countVisitePersonneEncours(),
+            SelectAllService(),
+        ]);
+        
+        res.status(200).json({
+            totalVisiteurs: (totalVisiteursLieu || 0) + (totalVisiteursPersonne || 0),
+            totalServices: Array.isArray(services) ? services.length : 0,
+            visitesEnCours: (visitesEncoursLieu || 0) + (visitesEncoursPersonne || 0),
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Erreur stats" });
     }
 }

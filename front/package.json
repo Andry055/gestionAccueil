@@ -1,72 +1,28 @@
 {
-  "name": "front",
+  "name": "gestion-visiteurs",
+  "version": "1.0.0",
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "main": "electron/main.js",
-  "homepage": "./",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview",
-    "electron": "electron .",
-    "electron-dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
-    "build-electron": "npm run build && electron-builder",
-    "pack": "electron-builder --dir",
-    "dist": "npm run build && electron-builder --publish=never"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
   "dependencies": {
-    "@heroicons/react": "^2.2.0",
-    "@tailwindcss/vite": "^4.1.11",
+    "next": "^15.2.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
     "axios": "^1.11.0",
     "framer-motion": "^12.23.0",
-    "html-to-image": "^1.11.13",
-    "jspdf": "^3.0.3",
     "lucide-react": "^0.525.0",
-    "react": "^19.1.0",
-    "react-bootstrap": "^2.10.10",
-    "react-chartjs-2": "^5.3.0",
-    "react-dom": "^19.1.0",
-    "react-router-dom": "^7.6.3",
     "recharts": "^3.1.2",
-    "tailwindcss": "^4.1.11"
+    "html-to-image": "^1.11.13",
+    "jspdf": "^3.0.3"
   },
   "devDependencies": {
-    "@eslint/js": "^9.29.0",
-    "@types/react": "^19.1.8",
-    "@types/react-dom": "^19.1.6",
-    "@vitejs/plugin-react": "^4.5.2",
-    "concurrently": "^9.2.1",
-    "electron": "^38.1.2",
-    "electron-builder": "^26.0.12",
-    "electron-is-dev": "^3.0.1",
-    "eslint": "^9.29.0",
-    "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-react-refresh": "^0.4.20",
-    "globals": "^16.2.0",
-    "vite": "^7.0.0",
-    "wait-on": "^9.0.1"
+    "@tailwindcss/postcss": "^4.1.0",
+    "tailwindcss": "^4.1.0",
+    "postcss": "^8.5.0"
   },
-  "build": {
-    "appId": "com.votrecompany.front",
-    "productName": "Front App",
-    "directories": {
-      "output": "dist-electron"
-    },
-    "files": [
-      "dist/**/*",
-      "electron/**/*",
-      "node_modules/**/*"
-    ],
-    "mac": {
-      "category": "public.app-category.productivity"
-    },
-    "win": {
-      "target": "nsis"
-    },
-    "linux": {
-      "target": "AppImage"
-    }
-  }
+  "type": "module"
 }

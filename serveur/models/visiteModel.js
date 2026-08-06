@@ -27,7 +27,7 @@ export async function createVisiteService(idVisiteur, idLieu, motif) {  // Ajout
 }
 
 export async function visiteTerminer(idVisite) {
-    const result=await pool.query(" UPDATE visites_lieu SET heure_depart = NOW(), statut = 'terminé 'WHERE id_visitelieu = $1 AND statut = 'en cours' RETURNING *",[idVisite]);
+    const result=await pool.query("UPDATE visites_lieu SET heure_depart = NOW() WHERE id_visitelieu = $1 AND heure_depart IS NULL RETURNING *",[idVisite]);
     return result.rows[0];
 }
 
@@ -84,7 +84,7 @@ export async function createPersonne(nom) {
 
 export async function visitePersonneTerminer(idVisite) {
     const result= await pool.query(
-        " UPDATE visites_personne SET heure_depart = NOW(), statut = 'terminé 'WHERE id_visitepersonne = $1 AND statut = 'en cours' RETURNING *",[idVisite]
+        "UPDATE visites_personne SET heure_depart = NOW() WHERE id_visitepersonne = $1 AND heure_depart IS NULL RETURNING *",[idVisite]
     );
     return result.rows[0];
 }
@@ -98,6 +98,13 @@ export async function updateVisiteur(id, nom, prenom, cin) {
 export async function updateVisiteurWithoutCin(id, nom, prenom) {
     const result= await pool.query(
         " UPDATE visiteurs SET nom =$1 , prenom =$2 WHERE id_Visiteur= $3 RETURNING *",[nom,prenom,id]
+    );
+    return result.rows[0];
+}
+
+export async function updateVisiteurAgent(id, nomAgent) {
+    const result= await pool.query(
+        "UPDATE visiteurs SET nom_agent = $1 WHERE id_visiteur = $2 RETURNING *",[nomAgent,id]
     );
     return result.rows[0];
 }
@@ -199,15 +206,60 @@ export async function  selectIdVisiteurForVisitePersonne(idVisite) {
 
 // graphique 
 
-export async function  chartMois() {
-    const result= await pool.query("SELECT TO_CHAR(date_p, 'Mon') AS mois, COUNT(*) AS nombre_visites, EXTRACT(MONTH FROM date_p) AS mois_num FROM visites_personne WHERE date_p >= CURRENT_DATE - INTERVAL '1 year' GROUP BY mois, mois_num ORDER BY mois_num;"
-    );
+// Derniers 7 jours (mode journalier)
+export async function chartJour() {
+    const result = await pool.query(`
+        SELECT 
+            date,
+            COUNT(*) AS nombre_visites,
+            COUNT(DISTINCT id_visiteur) AS nombre_visiteurs
+        FROM (
+            SELECT date, id_visiteur FROM visites_lieu
+            UNION ALL
+            SELECT date_p AS date, id_visiteur FROM visites_personne
+        ) combined
+        WHERE date >= CURRENT_DATE - INTERVAL '6 days'
+        GROUP BY date
+        ORDER BY date
+    `);
     return result.rows;
 }
 
-export async function  chartSemaine() {
-    const result= await pool.query("SELECT 'Sem ' || EXTRACT(WEEK FROM date_p) AS semaine, COUNT(*) AS nombre_visites FROM visites_personne WHERE date_p >= DATE_TRUNC('year', CURRENT_DATE) GROUP BY EXTRACT(WEEK FROM date_p) ORDER BY EXTRACT(WEEK FROM date_p)"
-    );
+export async function chartMois() {
+    const result = await pool.query(`
+        SELECT 
+            TO_CHAR(date, 'Mon') AS mois,
+            COUNT(*) AS nombre_visites,
+            COUNT(DISTINCT id_visiteur) AS nombre_visiteurs,
+            EXTRACT(MONTH FROM date) AS mois_num
+        FROM (
+            SELECT date, id_visiteur FROM visites_lieu
+            UNION ALL
+            SELECT date_p AS date, id_visiteur FROM visites_personne
+        ) combined
+        WHERE date >= CURRENT_DATE - INTERVAL '1 year'
+        GROUP BY mois, mois_num
+        ORDER BY mois_num
+    `);
+    return result.rows;
+}
+
+export async function chartSemaine() {
+    const result = await pool.query(`
+        SELECT 
+            'Sem ' || EXTRACT(WEEK FROM date) AS semaine,
+            COUNT(*) AS nombre_visites,
+            COUNT(DISTINCT id_visiteur) AS nombre_visiteurs,
+            EXTRACT(WEEK FROM date) AS semaine_num
+        FROM (
+            SELECT date, id_visiteur FROM visites_lieu
+            UNION ALL
+            SELECT date_p AS date, id_visiteur FROM visites_personne
+        ) combined
+        WHERE date >= DATE_TRUNC('year', CURRENT_DATE)
+        GROUP BY semaine, semaine_num
+        ORDER BY semaine_num
+    `);
     return result.rows;
 }
 export async function  SuperChartJour() {
