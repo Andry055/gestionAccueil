@@ -11,20 +11,24 @@ import { UpdateUsersController } from '../controllers/ajoutServiceControlleur.js
 import { DelelteUsersControlleur } from '../controllers/ajoutServiceControlleur.js';
 
 import { createServiceControlleur } from '../controllers/ajoutServiceControlleur.js';
+import { authorizeRoles } from '../middleware/authorizeRoles.js';
+
 const router = express.Router();
 
-router.post('/ajoutservice', createServiceControlleur);
-
-router.put('/updateService/:id', updateServiceController);
-router.post('/suprimerService', DeleteServiceController);
+// ─── Lecture (tous rôles authentifiés) ───────────────────
 router.get('/listeService', SelectAllServiceControlleur);
 router.get('/listeServiceVisiteur', SelectCountVisiteurServiceControlleur);
 router.get('/nombreServiceVisite', CountServiceControlleur);
 router.get('/listeVisiteur/:id', listeVisiteurServiceNom);
 router.get('/topServices', getTopServicesController);
 router.get('/listeUsers', SelectAllUsersController);
-router.put('/updateUser/:id',UpdateUsersController);
-router.delete('/deleteUser/:id', DelelteUsersControlleur);
+
+// ─── Écriture (admin + superadmin uniquement) ────────────
+router.post('/ajoutservice', authorizeRoles('admin', 'superadmin'), createServiceControlleur);
+router.put('/updateService/:id', authorizeRoles('admin', 'superadmin'), updateServiceController);
+router.post('/suprimerService', authorizeRoles('admin', 'superadmin'), DeleteServiceController);
+router.put('/updateUser/:id', authorizeRoles('admin', 'superadmin'), UpdateUsersController);
+router.delete('/deleteUser/:id', authorizeRoles('admin', 'superadmin'), DelelteUsersControlleur);
 
 
 

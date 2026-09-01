@@ -8,7 +8,9 @@ import { UserPlus, CheckCircle, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import api from '@/lib/api';
 
 export default function RegisterPage() {
-  const [name, setName] = useState('');
+  const [nom, setNom] = useState('');
+  const [prenom, setPrenom] = useState('');
+  const [tel, setTel] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState('admin');
@@ -26,7 +28,7 @@ export default function RegisterPage() {
       return;
     }
     try {
-      await api.post('/api/auth/register', { name, password, role });
+      await api.post('/api/auth/register', { nom, prenom, role, tel, password });
       setShowModal(true);
       setTimeout(() => { setShowModal(false); router.push('/'); }, 2000);
     } catch (err) {
@@ -62,7 +64,7 @@ export default function RegisterPage() {
           <form onSubmit={handleRegister} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Nom d&apos;utilisateur</label>
-              <input type="text" placeholder="Entrez votre nom" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all" required />
+              <input type="text" placeholder="Entrez votre nom" value={nom} onChange={(e) => setNom(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all" required />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Mot de passe</label>
@@ -77,6 +79,14 @@ export default function RegisterPage() {
                 <input type={showConfirm ? 'text' : 'password'} placeholder="Confirmez votre mot de passe" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full pr-12 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all" required />
                 <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">{showConfirm ? <EyeOff size={20} /> : <Eye size={20} />}</button>
               </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Prénom</label>
+              <input type="text" placeholder="Entrez votre prénom" value={prenom} onChange={(e) => setPrenom(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all" required />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Téléphone</label>
+              <input type="text" placeholder="Entrez votre téléphone" value={tel} onChange={(e) => setTel(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all" required />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Rôle</label>

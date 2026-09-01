@@ -38,7 +38,7 @@ function VisiteContent() {
         v.nom?.toLowerCase().includes(t) ||
         v.prenom?.toLowerCase().includes(t) ||
         v.nom_lieu?.toLowerCase().includes(t) ||
-        v.personne_visite?.toLowerCase().includes(t) ||
+        v.nom_agent?.toLowerCase().includes(t) ||
         v.motif?.toLowerCase().includes(t)
       );
     }
@@ -83,7 +83,7 @@ function VisiteContent() {
 
   const headerKeys = typeVisite === 'lieu'
     ? ['id_visitelieu', 'nom', 'date', 'heure_arrivee', 'heure_depart', 'nom_lieu', 'motif']
-    : ['id_visitepersonne', 'nom', 'date_p', 'heure_arrivee', 'heure_depart', 'personne_visite', 'motif'];
+    : ['id_visitepersonne', 'nom', 'date_p', 'heure_arrivee', 'heure_depart', 'nom_agent', 'motif'];
 
   return (
     <div className={`min-h-screen bg-gradient-to-br ${bg} transition-all duration-500`}>
@@ -249,7 +249,7 @@ function VisiteContent() {
                               ) : (
                                 <User size={14} className="text-purple-500" />
                               )}
-                              <span className="text-sm">{typeVisite === 'lieu' ? v.nom_lieu : v.personne_visite}</span>
+                              <span className="text-sm">{typeVisite === 'lieu' ? v.nom_lieu : v.nom_agent}</span>
                             </div>
                           </td>
                           <td className="px-4 py-3.5 max-w-[180px]">

@@ -2,10 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import  dotenv  from 'dotenv';
 import authRoutes from './routes/authRoutes.js'; 
-import { register } from './controllers/registerController.js';
 import visiteRoutes from './routes/ajoutVisiteRoutes.js';
 import Service from './routes/serviceRoutes.js'
 import aiRoutes from './routes/aiRoutes.js'
+import { authenticateToken } from './middleware/authenticateToken.js';
+import { authorizeRoles } from './middleware/authorizeRoles.js';
 
 dotenv.config();
 
@@ -16,17 +17,16 @@ const PORT = 5000;
 app.use(cors());
 app.use(express.json());
 
-// Route de test (GET)
+// ─── Routes publiques ────────────────────────────────────
 app.get('/', (req, res) => {
   res.send('✅ Serveur backend opérationnel !');
 });
-
-// Route API
-app.use('/service',Service);
-app.use('/visite', visiteRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/register', register);
-app.use('/api/ai', aiRoutes);
+
+// ─── Routes protégées (authentification requise) ─────────
+app.use('/visite', authenticateToken, visiteRoutes);
+app.use('/api/ai', authenticateToken, aiRoutes);
+app.use('/service', authenticateToken, Service);
 
 // Lancement du serveur
 app.listen(PORT, () => {

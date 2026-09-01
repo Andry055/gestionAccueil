@@ -9,7 +9,7 @@ const pool = new Pool({
   host: process.env.DB_HOST,
   database: process.env.DB_NAME,       // ⚠️ nom de ta base
   password: process.env.DB_PASSWORD ,    // ⚠️ ton mot de passe
-  port: process.env.DB_PORT,
+  port: parseInt(process.env.DB_PORT) || 5432,
 });
 
 export default pool;
