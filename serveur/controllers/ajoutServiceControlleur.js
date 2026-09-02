@@ -8,6 +8,12 @@ export async function createServiceControlleur(req ,res ) {
     const {nom, porte, etage }= req.body;
     try{
         const service= await createService(nom, porte, etage);
+
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('service:created', { service: { id: service.id_lieu, nom, porte, etage } });
+        }
+
         res.status(201).json({ message: "Service enregistrée avec succès" });
 
     }
@@ -22,6 +28,12 @@ export async function updateServiceController(req, res) {
     const {nom_lieu, porte, etage }= req.body;
     try{
         const service= await updateService(id, nom_lieu, porte, etage);
+
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('service:updated', { id, nom_lieu, porte, etage });
+        }
+
         res.status(201).json({ message: "Service mise à jour avec succès" });
     }
     catch(err){
@@ -33,6 +45,12 @@ export async function DeleteServiceController(req, res) {
     const {id}= req.body;
     try{
         const service= await DeleteService(id);
+
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('service:deleted', { id });
+        }
+
         res.status(201).json({ message: "Service suprimer avec succès" });
     }
     catch(err){
@@ -131,6 +149,11 @@ export async function SelectAllUsersController(req, res) {
         
         // On ne retourne jamais le mot de passe dans la réponse
         const { password: _, ...userWithoutPassword } = updatedUser;
+
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('user:updated', { id, nom, prenom, role, tel });
+        }
         
         res.status(200).json({ 
             success: true,
@@ -152,6 +175,12 @@ export async function DelelteUsersControlleur(req, res) {
     const {id}= req.params
     try {
         const users = await DeleteUsersAccueil(id);
+
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('user:deleted', { id });
+        }
+
         res.status(200).json({data: users});
     } catch (err) {
         console.error(err);

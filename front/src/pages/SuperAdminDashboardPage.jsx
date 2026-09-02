@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useDarkMode } from '@/contexts/DarkModeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import AuthGuard from '@/components/AuthGuard';
 import api from '@/lib/api';
@@ -12,7 +11,6 @@ import jsPDF from 'jspdf';
 const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16'];
 
 function SuperAdminDashboardContent() {
-  const { darkMode } = useDarkMode();
   const { user } = useAuth();
   const chartRef = useRef(null);
   const [timeRange, setTimeRange] = useState('today');
@@ -50,7 +48,7 @@ function SuperAdminDashboardContent() {
 
   const exportPNG = async () => {
     if (!chartRef.current) return;
-    try { const dataUrl = await toPng(chartRef.current, { backgroundColor: darkMode ? '#1f2937' : '#ffffff' }); const link = document.createElement('a'); link.download = 'statistiques.png'; link.href = dataUrl; link.click(); } catch (err) { console.error(err); }
+    try { const dataUrl = await toPng(chartRef.current, { backgroundColor: '#ffffff' }); const link = document.createElement('a'); link.download = 'statistiques.png'; link.href = dataUrl; link.click(); } catch (err) { console.error(err); }
   };
 
   const exportPDF = async () => {
@@ -60,17 +58,11 @@ function SuperAdminDashboardContent() {
 
   const filteredData = chartData.filter((d) => d.nom_lieu?.toLowerCase().includes(searchTerm.toLowerCase()));
 
-  const bg = darkMode ? 'bg-gray-900' : 'bg-gray-50';
-  const cardBg = darkMode ? 'bg-gray-800' : 'bg-white';
-  const textColor = darkMode ? 'text-white' : 'text-gray-900';
-  const mutedText = darkMode ? 'text-gray-400' : 'text-gray-500';
-  const border = darkMode ? 'border-gray-700' : 'border-gray-200';
-
   return (
-    <div className={`min-h-screen ${bg} transition-colors duration-200`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
-          <div><h1 className={`text-3xl font-bold ${textColor}`}>Tableau de bord Super Admin</h1><p className={mutedText}>Bienvenue, {user?.username}</p></div>
+          <div><h1 className="text-3xl font-bold text-gray-900">Tableau de bord Super Admin</h1><p className="text-gray-500">Bienvenue, {user?.username}</p></div>
           <div className="flex items-center gap-2">
             <button onClick={exportPNG} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-600 text-white hover:bg-green-700 transition-all text-sm font-medium"><Image size={16} /> PNG</button>
             <button onClick={exportPDF} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 transition-all text-sm font-medium"><FileText size={16} /> PDF</button>
@@ -79,17 +71,17 @@ function SuperAdminDashboardContent() {
 
         <div className="flex flex-wrap gap-2 mb-6">
           {[{ value: 'today', label: "Aujourd'hui" }, { value: 'week', label: 'Cette semaine' }, { value: 'month', label: 'Ce mois' }, { value: 'custom', label: 'Personnalisé' }].map((opt) => (
-            <button key={opt.value} onClick={() => { setTimeRange(opt.value); if (opt.value === 'custom') setShowCustomDate(true); }} className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${timeRange === opt.value ? 'bg-purple-600 text-white shadow-lg' : cardBg + ' border ' + border + ' hover:bg-gray-100 dark:hover:bg-gray-700'}`}>{opt.label}</button>
+            <button key={opt.value} onClick={() => { setTimeRange(opt.value); if (opt.value === 'custom') setShowCustomDate(true); }} className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${timeRange === opt.value ? 'bg-purple-600 text-white shadow-lg' : 'bg-white border border-gray-200 hover:bg-gray-100'}`}>{opt.label}</button>
           ))}
-          <button onClick={fetchChartData} className={`p-2 rounded-xl ${cardBg} border ${border} hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors`}><RefreshCw size={18} /></button>
+          <button onClick={fetchChartData} className="p-2 rounded-xl bg-white border border-gray-200 hover:bg-gray-100 transition-colors"><RefreshCw size={18} /></button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           {[{ label: 'Visites totales', value: stats.totalVisites, icon: Users, color: 'blue' }, { label: 'Services visités', value: stats.totalServices, icon: Building2, color: 'purple' }, { label: 'En cours', value: stats.visitesEnCours, icon: Clock, color: 'green' }].map((stat) => (
-            <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className={`${cardBg} rounded-2xl p-6 shadow-sm border ${border}`}>
+            <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
               <div className="flex items-center justify-between">
-                <div><p className={`text-sm ${mutedText}`}>{stat.label}</p><p className={`text-3xl font-bold ${textColor} mt-1`}>{stat.value}</p></div>
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: stat.color === 'blue' ? (darkMode ? '#1e3a5f' : '#dbeafe') : stat.color === 'purple' ? (darkMode ? '#3b1f6e' : '#f3e8ff') : (darkMode ? '#1a4731' : '#d1fae5') }}>
+                <div><p className="text-sm text-gray-500">{stat.label}</p><p className="text-3xl font-bold text-gray-900 mt-1">{stat.value}</p></div>
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: stat.color === 'blue' ? '#dbeafe' : stat.color === 'purple' ? '#f3e8ff' : '#d1fae5' }}>
                   <stat.icon className="w-6 h-6" style={{ color: stat.color === 'blue' ? '#2563eb' : stat.color === 'purple' ? '#7c3aed' : '#059669' }} />
                 </div>
               </div>
@@ -97,10 +89,10 @@ function SuperAdminDashboardContent() {
           ))}
         </div>
 
-        <div className={`${cardBg} rounded-2xl shadow-sm border ${border} p-6`}>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className={`text-lg font-semibold ${textColor}`}>Répartition des visites par service</h2>
-            <div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" /><input type="text" placeholder="Filtrer..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`pl-9 pr-3 py-2 rounded-lg border ${border} bg-gray-50 dark:bg-gray-700 text-sm outline-none focus:ring-2 focus:ring-purple-500 ${textColor}`} /></div>
+            <h2 className="text-lg font-semibold text-gray-900">Répartition des visites par service</h2>
+            <div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" /><input type="text" placeholder="Filtrer..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9 pr-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-sm outline-none focus:ring-2 focus:ring-purple-500 text-gray-900" /></div>
           </div>
           <div ref={chartRef} className="w-full">
             {loading ? <div className="flex items-center justify-center py-16"><RefreshCw className="w-8 h-8 animate-spin text-purple-600" /></div> : filteredData.length === 0 ? <div className="text-center py-16 text-gray-400">Aucune donnée disponible</div> : (
@@ -108,10 +100,10 @@ function SuperAdminDashboardContent() {
                 <ResponsiveContainer width="100%" height={400}>
                   <PieChart>
                     <Pie data={filteredData} dataKey="nb_visites" nameKey="nom_lieu" cx="50%" cy="50%" outerRadius={150} innerRadius={60} paddingAngle={3}>
-                      {filteredData.map((_, i) => (<Cell key={i} fill={COLORS[i % COLORS.length]} stroke={darkMode ? '#1f2937' : '#ffffff'} strokeWidth={2} />))}
+                      {filteredData.map((_, i) => (<Cell key={i} fill={COLORS[i % COLORS.length]} stroke="#ffffff" strokeWidth={2} />))}
                     </Pie>
-                    <Tooltip contentStyle={{ backgroundColor: darkMode ? '#1f2937' : '#ffffff', border: '1px solid ' + (darkMode ? '#374151' : '#e5e7eb'), borderRadius: '12px', color: darkMode ? '#f3f4f6' : '#111827' }} />
-                    <Legend formatter={(value) => <span style={{ color: darkMode ? '#f3f4f6' : '#111827' }}>{value}</span>} />
+                    <Tooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '12px', color: '#111827' }} />
+                    <Legend formatter={(value) => <span style={{ color: '#111827' }}>{value}</span>} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -119,26 +111,26 @@ function SuperAdminDashboardContent() {
           </div>
         </div>
 
-      {showCustomDate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className={"w-full max-w-md rounded-2xl shadow-2xl p-6 " + cardBg}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Dates personnalisées</h3>
-              <button onClick={() => setShowCustomDate(false)} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"><X size={20} /></button>
-            </div>
-            <div className="space-y-4">
-              <div><label className={"block text-sm font-medium " + mutedText + " mb-1"}>Date début</label><input type="date" value={customStart} onChange={(e) => setCustomStart(e.target.value)} className={"w-full px-4 py-2.5 rounded-xl border " + border + " bg-gray-50 dark:bg-gray-700 text-sm outline-none focus:ring-2 focus:ring-purple-500 " + textColor} /></div>
-              <div><label className={"block text-sm font-medium " + mutedText + " mb-1"}>Date fin</label><input type="date" value={customEnd} onChange={(e) => setCustomEnd(e.target.value)} className={"w-full px-4 py-2.5 rounded-xl border " + border + " bg-gray-50 dark:bg-gray-700 text-sm outline-none focus:ring-2 focus:ring-purple-500 " + textColor} /></div>
-            </div>
-            <div className="flex gap-3 mt-6">
-              <button onClick={() => setShowCustomDate(false)} className={"flex-1 py-2.5 rounded-xl border " + border + " font-medium transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"}>Annuler</button>
-              <button onClick={() => { setShowCustomDate(false); setTimeRange('custom'); }} className="flex-1 py-2.5 rounded-xl bg-purple-600 text-white font-medium hover:bg-purple-700 transition-all">Appliquer</button>
+        {showCustomDate && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-2xl shadow-2xl p-6 bg-white">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Dates personnalisées</h3>
+                <button onClick={() => setShowCustomDate(false)} className="p-1 rounded-lg hover:bg-gray-100"><X size={20} /></button>
+              </div>
+              <div className="space-y-4">
+                <div><label className="block text-sm font-medium text-gray-500 mb-1">Date début</label><input type="date" value={customStart} onChange={(e) => setCustomStart(e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm outline-none focus:ring-2 focus:ring-purple-500 text-gray-900" /></div>
+                <div><label className="block text-sm font-medium text-gray-500 mb-1">Date fin</label><input type="date" value={customEnd} onChange={(e) => setCustomEnd(e.target.value)} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm outline-none focus:ring-2 focus:ring-purple-500 text-gray-900" /></div>
+              </div>
+              <div className="flex gap-3 mt-6">
+                <button onClick={() => setShowCustomDate(false)} className="flex-1 py-2.5 rounded-xl border border-gray-200 font-medium transition-colors hover:bg-gray-100 text-gray-700">Annuler</button>
+                <button onClick={() => { setShowCustomDate(false); setTimeRange('custom'); }} className="flex-1 py-2.5 rounded-xl bg-purple-600 text-white font-medium hover:bg-purple-700 transition-all">Appliquer</button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
-  </div>
   );
 }
 

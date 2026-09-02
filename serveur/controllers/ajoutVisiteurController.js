@@ -25,11 +25,22 @@ export async function createVisiteController(req, res) {
         }
 
         // Créer la visite
-        await createVisiteService(
+        const nouvelleVisite = await createVisiteService(
             visiteur.id_visiteur, 
             service.id_lieu, 
             motif
         );
+
+        // 🔴 WebSocket : notifier tous les clients
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('visite:created', {
+                type: 'lieu',
+                visite: nouvelleVisite,
+                visiteur: { id: visiteur.id_visiteur, nom, prenom, cin },
+                service: { id: service.id_lieu, nom: service.nom_lieu },
+            });
+        }
 
         res.status(201).json({ message: "Visite enregistrée avec succès" });
 
@@ -45,6 +56,13 @@ export async function updateVisiteurControlleur(req, res) {
     const {nom, prenom, cin} = req.body;
     try{
         let visite = await  updateVisiteur(id, nom , prenom , cin);
+
+        // 🔴 WebSocket : notifier les clients
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('visiteur:updated', { id, nom, prenom, cin });
+        }
+
         res.status(201).json({ message: "Visiteur mise à jour avec succès" });
     }
     catch(err){
@@ -73,6 +91,12 @@ export async function visiteterminerControlleur(req, res) {
     const {id} = req.params;
     try{
         let visite = await  visiteTerminer(id);
+
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('visite:terminated', { id, type: 'lieu' });
+        }
+
         res.status(200).json({ message: "Visite terminée avec succès", data: visite});
     }
     catch(err){
@@ -96,6 +120,16 @@ export async function ajoutVisitePersonne(req, res) {
         }
         
         let visite= await createVisitePersonne(visiteur.id_visiteur, agent.id_agent);
+
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('visite:created', {
+                type: 'personne',
+                visiteur: { id: visiteur.id_visiteur, nom, prenom, cin },
+                agent: { id: agent.id_agent, nom: agent.nom_agent },
+            });
+        }
+
         res.status(201).json({message: "Visite personne enregistrer"});
 
     }
@@ -167,6 +201,12 @@ export async function visitePersonneTerminerController(req, res) {
     const {id} = req.params;
     try {
         let visite = await  visitePersonneTerminer(id);
+
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('visite:terminated', { id, type: 'personne' });
+        }
+
         res.status(200).json({ message: "Visite personne terminée avec succès", data: visite });
     }
     catch(err){

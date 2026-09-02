@@ -1,7 +1,6 @@
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import Navbar from './Navbar';
-import SuperNavbar from './SuperNavbar';
+import AppLayout from './AppLayout';
 import AssistantIA from './AssistantIA';
 
 export default function ClientLayout({ children }) {
@@ -9,16 +8,23 @@ export default function ClientLayout({ children }) {
   const { user } = useAuth();
   const pathname = location.pathname;
 
-  const role = user?.role;
-  const hideNavbarRoutes = ['/'];
-  const showNavbar = !hideNavbarRoutes.includes(pathname);
-  const showAssistant = showNavbar;
+  // Hide layout on login and register pages
+  const hideLayoutRoutes = ['/', '/register'];
+  const showLayout = !hideLayoutRoutes.includes(pathname) && user;
+
+  if (!showLayout) {
+    return (
+      <>
+        {children}
+        {user && <AssistantIA />}
+      </>
+    );
+  }
 
   return (
-    <>
-      {showNavbar && (role === 'superadmin' ? <SuperNavbar /> : <Navbar />)}
+    <AppLayout>
       {children}
-      {showAssistant && <AssistantIA />}
-    </>
+      <AssistantIA />
+    </AppLayout>
   );
 }

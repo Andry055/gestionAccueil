@@ -27,7 +27,7 @@ export async function createVisiteService(idVisiteur, idLieu, motif) {  // Ajout
 }
 
 export async function visiteTerminer(idVisite) {
-    const result=await pool.query("UPDATE visites_lieu SET heure_depart = NOW() WHERE id_visitelieu = $1 AND heure_depart IS NULL RETURNING *",[idVisite]);
+    const result=await pool.query("UPDATE visites_lieu SET heure_depart = NOW(), statut = 'terminée' WHERE id_visitelieu = $1 AND heure_depart IS NULL RETURNING *",[idVisite]);
     return result.rows[0];
 }
 
@@ -36,8 +36,11 @@ export async function updateVisitelieu(idVisite,motif, idLieu) {
     return result.rows[0];
 }
 
-export async function updateVisitePersonne(idVisite,motif, idLieu) {
-    const result=await pool.query("UPDATE visites_lieu SET motif = $1,  id_lieu=$2  WHERE id_visitelieu = $3 RETURNING *",[motif,idLieu,idVisite]);
+export async function updateVisitePersonne(idVisite, motif, idAgent) {
+    const result = await pool.query(
+        "UPDATE visites_personne SET motif = $1, id_agent = $2 WHERE id_visitepersonne = $3 RETURNING *",
+        [motif, idAgent, idVisite]
+    );
     return result.rows[0];
 }
 
@@ -84,7 +87,7 @@ export async function createPersonne(nom) {
 
 export async function visitePersonneTerminer(idVisite) {
     const result= await pool.query(
-        "UPDATE visites_personne SET heure_depart = NOW() WHERE id_visitepersonne = $1 AND heure_depart IS NULL RETURNING *",[idVisite]
+        "UPDATE visites_personne SET heure_depart = NOW(), statut = 'terminée' WHERE id_visitepersonne = $1 AND heure_depart IS NULL RETURNING *",[idVisite]
     );
     return result.rows[0];
 }

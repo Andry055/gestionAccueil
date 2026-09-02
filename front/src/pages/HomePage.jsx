@@ -1,16 +1,21 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { useDarkMode } from '@/contexts/DarkModeContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSocket } from '@/contexts/SocketContext';
 import AuthGuard from '@/components/AuthGuard';
 import AjoutVisiteur from '@/components/AjoutVisiteur';
+import { exportToPDF, exportToCSV } from '@/utils/exportPDF';
 import api from '@/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Building2, Clock, RefreshCw, Eye, Check, Loader2, TrendingUp, Calendar, ArrowRight, Activity, UserPlus } from 'lucide-react';
+import {
+  Users, Building2, Clock, RefreshCw, Check, Loader2,
+  TrendingUp, ArrowRight, Activity, UserPlus, Wifi, WifiOff,
+  FileText, Download,
+} from 'lucide-react';
 
 function HomeContent() {
-  const { darkMode } = useDarkMode();
   const { user } = useAuth();
+  const { connected, on, off } = useSocket();
   const [visitesLieu, setVisitesLieu] = useState([]);
   const [visitesPersonne, setVisitesPersonne] = useState([]);
   const [servicesList, setServicesList] = useState([]);
@@ -34,7 +39,25 @@ function HomeContent() {
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { fetchData(); const i = setInterval(fetchData, 30000); return () => clearInterval(i); }, [fetchData]);
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  useEffect(() => {
+    const handleRefresh = () => fetchData();
+    on('visite:created', handleRefresh);
+    on('visite:terminated', handleRefresh);
+    on('visiteur:updated', handleRefresh);
+    on('service:created', handleRefresh);
+    on('service:updated', handleRefresh);
+    on('service:deleted', handleRefresh);
+    return () => {
+      off('visite:created', handleRefresh);
+      off('visite:terminated', handleRefresh);
+      off('visiteur:updated', handleRefresh);
+      off('service:created', handleRefresh);
+      off('service:updated', handleRefresh);
+      off('service:deleted', handleRefresh);
+    };
+  }, [on, off, fetchData]);
 
   const terminerVisite = async (id, type) => {
     try {
@@ -49,173 +72,144 @@ function HomeContent() {
   const fmtHeure = (d) => { if (!d) return '-'; return new Date(d).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }); };
   const fmtDate = (d) => { if (!d) return '-'; return new Date(d).toLocaleDateString('fr-FR'); };
 
-  const bg = darkMode ? 'bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800' : 'bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50';
-  const card = darkMode ? 'bg-slate-800/90 border-slate-700/50 shadow-xl shadow-black/20' : 'bg-white/90 border-slate-200/60 shadow-xl shadow-slate-200/50';
-  const tc = darkMode ? 'text-white' : 'text-slate-900';
-  const mc = darkMode ? 'text-slate-300' : 'text-slate-600';
-  const brd = darkMode ? 'border-slate-700/50' : 'border-slate-200/60';
-  const hoverCard = darkMode ? 'hover:bg-slate-700/60' : 'hover:bg-slate-50/80';
-
-  const statStyle = (c) => ({
-    bg: c === 'blue' ? (darkMode ? 'bg-blue-500/15' : 'bg-blue-50') : c === 'purple' ? (darkMode ? 'bg-purple-500/15' : 'bg-purple-50') : (darkMode ? 'bg-emerald-500/15' : 'bg-emerald-50'),
-    ic: c === 'blue' ? '#3b82f6' : c === 'purple' ? '#8b5cf6' : '#10b981',
-    from: c === 'blue' ? 'from-blue-600' : c === 'purple' ? 'from-purple-600' : 'from-emerald-600',
-    to: c === 'blue' ? 'to-blue-400' : c === 'purple' ? 'to-purple-400' : 'to-emerald-400',
-  });
-
   const recentVisites = [...visitesLieu, ...visitesPersonne]
     .sort((a, b) => new Date(b.date || b.date_p) - new Date(a.date || a.date_p))
     .slice(0, 10);
 
   if (loading) {
     return (
-      <div className={`min-h-screen ${bg} flex items-center justify-center`}>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center animate-pulse shadow-lg shadow-blue-500/25">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center animate-pulse shadow-lg">
             <Activity className="w-7 h-7 text-white" />
           </div>
-          <p className={`text-sm ${mc}`}>Chargement du tableau de bord...</p>
+          <p className="text-sm text-gray-500">Chargement du tableau de bord...</p>
         </div>
       </div>
     );
   }
 
+  const statCards = [
+    {
+      label: 'Visiteurs aujourd\'hui',
+      value: stats.totalVisiteurs ?? 0,
+      icon: Users,
+      color: 'blue',
+      bgClass: 'bg-blue-50',
+      iconClass: 'text-blue-600',
+      subtext: 'Toutes directions',
+    },
+    {
+      label: 'Services actifs',
+      value: stats.totalServices ?? 0,
+      icon: Building2,
+      color: 'purple',
+      bgClass: 'bg-purple-50',
+      iconClass: 'text-purple-600',
+      subtext: 'Enregistrés',
+    },
+    {
+      label: 'Visites en cours',
+      value: stats.visitesEnCours ?? 0,
+      icon: Clock,
+      color: 'green',
+      bgClass: 'bg-emerald-50',
+      iconClass: 'text-emerald-600',
+      subtext: 'En attente',
+    },
+  ];
+
   return (
-    <div className={`min-h-screen ${bg} transition-all duration-500`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        {/* En-tête */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4"
-        >
-          <div>
-            <div className="flex items-center gap-3 mb-1">
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/25">
-                <Activity className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className={`text-2xl sm:text-3xl font-bold ${tc}`}>Tableau de bord</h1>
-                <p className={`text-sm ${mc}`}>Bienvenue, <span className="font-semibold text-blue-600 dark:text-blue-400">{user?.username || 'utilisateur'}</span></p>
-              </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Stat cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+          {/* Nouvelle visite card - matches reference image exactly */}
+          <div
+            className="rounded-3xl p-6 text-white relative overflow-hidden shadow-lg cursor-pointer flex flex-col items-center text-center min-h-[220px]"
+            style={{
+              background: 'linear-gradient(180deg, #1a237e 0%, #283593 60%, #3949ab 100%)',
+            }}
+            onClick={() => setAjoutVisiteurOpen(true)}
+          >
+            <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center mb-4">
+              <FileText size={24} className="text-white" />
+            </div>
+            <p className="text-sm font-semibold leading-snug mb-4">Cliquer ici pour<br />enregistrer une<br />nouvelle visite</p>
+            <div className="mt-auto">
+              <span className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-white/20 hover:bg-white/30 text-white text-xs font-semibold transition-colors backdrop-blur-sm">
+                Commencer <ArrowRight size={14} />
+              </span>
             </div>
           </div>
-          <div className="flex items-center flex-wrap gap-2">
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => setAjoutVisiteurOpen(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-white hover:from-emerald-600 hover:to-green-600 transition-all text-sm font-medium shadow-lg shadow-emerald-500/30"
-              title="Ajouter une visite"
-            >
-              <UserPlus size={16} /> Nouvelle visite
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={fetchData}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-700 hover:to-blue-600 transition-all text-sm font-medium shadow-lg shadow-blue-500/30"
-            >
-              <RefreshCw size={16} /> Actualiser
-            </motion.button>
-            <Link to="/visiteur" className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border ${brd} ${tc} text-sm font-medium ${hoverCard} transition-all backdrop-blur-sm`}>
-              <Users size={16} /> Visiteurs
-            </Link>
-            <Link to="/visite" className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border ${brd} ${tc} text-sm font-medium ${hoverCard} transition-all backdrop-blur-sm`}>
-              <Clock size={16} /> Visites
-            </Link>
-          </div>
-        </motion.div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
-          {[
-            { label: 'Visiteurs aujourd\'hui', value: stats.totalVisiteurs, icon: Users, color: 'blue' },
-            { label: 'Services actifs', value: stats.totalServices, icon: Building2, color: 'purple' },
-            { label: 'Visites en cours', value: stats.visitesEnCours, icon: Clock, color: 'green' },
-          ].map((s, i) => {
-            const ss = statStyle(s.color);
-            return (
-              <motion.div
-                key={s.label}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                className={`${card} rounded-2xl p-6 border backdrop-blur-xl relative overflow-hidden group`}
-              >
-                <div className={`absolute inset-0 bg-gradient-to-br ${ss.from} ${ss.to} opacity-0 group-hover:opacity-5 transition-opacity duration-500 rounded-2xl`} />
-                <div className="flex items-center justify-between relative z-10">
-                  <div>
-                    <p className={`text-sm font-medium ${mc}`}>{s.label}</p>
-                    <p className={`text-4xl font-bold ${tc} mt-2`}>{s.value ?? 0}</p>
-                    <div className={`mt-2 flex items-center gap-1 text-xs ${mc}`}>
-                      <TrendingUp size={12} className={s.color === 'green' ? 'text-emerald-500' : s.color === 'blue' ? 'text-blue-500' : 'text-purple-500'} />
-                      <span>En temps réel</span>
-                    </div>
-                  </div>
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${ss.bg} backdrop-blur-sm`}>
-                    <s.icon className="w-7 h-7" style={{ color: ss.ic }} />
-                  </div>
+          {/* Stat cards */}
+          {statCards.map((s, i) => (
+            <div
+              key={s.label}
+              className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{s.label}</p>
                 </div>
-              </motion.div>
-            );
-          })}
+                <div className={`w-11 h-11 rounded-xl ${s.bgClass} flex items-center justify-center`}>
+                  <s.icon className={`w-5 h-5 ${s.iconClass}`} />
+                </div>
+              </div>
+              <p className="text-3xl font-bold text-gray-900">{s.value}</p>
+              <p className="text-xs text-gray-400 mt-1">{s.subtext}</p>
+            </div>
+          ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Visites en cours */}
+        {/* Content grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Active visits */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className={`${card} rounded-2xl border backdrop-blur-xl overflow-hidden`}
+            className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden lg:col-span-1"
           >
-            <div className={`flex items-center justify-between px-6 py-4 border-b ${brd} bg-gradient-to-r from-transparent via-emerald-500/5 to-transparent`}>
-              <h2 className={`text-lg font-semibold ${tc} flex items-center gap-2`}>
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-green-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                  <Clock size={16} className="text-white" />
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center">
+                  <Clock size={14} className="text-emerald-600" />
                 </div>
                 Visites en cours
               </h2>
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/20">
+              <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">
                 {stats.visitesEnCours} active{stats.visitesEnCours !== 1 ? 's' : ''}
               </span>
             </div>
-            <div className="p-4 max-h-[420px] overflow-y-auto custom-scrollbar">
+            <div className="p-4 max-h-[360px] overflow-y-auto">
               {recentVisites.filter(v => !v.heure_depart).length === 0 ? (
-                <div className="flex flex-col items-center py-10 text-center">
-                  <div className="w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center mb-3">
-                    <Check size={28} className="text-emerald-400" />
+                <div className="flex flex-col items-center py-8 text-center">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center mb-3">
+                    <Check size={20} className="text-emerald-400" />
                   </div>
-                  <p className={`text-sm font-medium ${tc}`}>Tout est à jour</p>
-                  <p className={`text-xs ${mc} mt-1`}>Aucune visite en cours pour le moment</p>
+                  <p className="text-sm font-medium text-gray-900">Tout est à jour</p>
+                  <p className="text-xs text-gray-400 mt-1">Aucune visite en cours</p>
                 </div>
               ) : (
-                <AnimatePresence>
-                  {recentVisites.filter(v => !v.heure_depart).map((v, idx) => (
-                    <motion.div
+                <div className="space-y-2">
+                  {recentVisites.filter(v => !v.heure_depart).map((v) => (
+                    <div
                       key={'act-' + (v.id_visitelieu || 'p' + v.id_visitepersonne)}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: idx * 0.05 }}
-                      className={`flex items-center justify-between p-3 rounded-xl ${hoverCard} transition-all ${brd} border-b last:border-0 group/item`}
+                      className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-all group"
                     >
                       <div className="flex items-center gap-3">
                         <div className="relative">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center shadow-md shadow-emerald-500/20">
-                            <Users size={16} className="text-white" />
+                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center shadow-sm">
+                            <Users size={14} className="text-white" />
                           </div>
-                          <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-slate-800 rounded-full animate-pulse" />
+                          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full animate-pulse" />
                         </div>
                         <div>
-                          <p className={`text-sm font-semibold ${tc}`}>{v.nom} {v.prenom}</p>
-                          <p className={`text-xs ${mc} flex items-center gap-1 mt-0.5`}>
-                            <Building2 size={10} className="text-emerald-500" />
-                            {v.nom_lieu || v.nom_agent || v.personne_visite || 'N/A'}
-                            <span className="mx-1">·</span>
-                            <Clock size={10} className="text-blue-400" />
-                            {fmtHeure(v.heure_arrivee)}
+                          <p className="text-sm font-semibold text-gray-900">{v.nom} {v.prenom}</p>
+                          <p className="text-xs text-gray-500">
+                            {v.nom_lieu || v.nom_agent || '-'} · {fmtHeure(v.heure_arrivee)}
                           </p>
                         </div>
                       </div>
@@ -223,14 +217,14 @@ function HomeContent() {
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => terminerVisite(v.id_visitelieu || v.id_visitepersonne, v.id_visitepersonne ? 'personne' : 'lieu')}
-                        className="p-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-white hover:from-emerald-600 hover:to-green-600 transition-all shadow-md shadow-emerald-500/30 opacity-0 group-hover/item:opacity-100 lg:opacity-100"
+                        className="p-2 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all opacity-0 group-hover:opacity-100"
                         title="Terminer"
                       >
-                        <Check size={16} />
+                        <Check size={14} />
                       </motion.button>
-                    </motion.div>
+                    </div>
                   ))}
-                </AnimatePresence>
+                </div>
               )}
             </div>
           </motion.div>
@@ -240,143 +234,157 @@ function HomeContent() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className={`${card} rounded-2xl border backdrop-blur-xl overflow-hidden`}
+            className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden lg:col-span-2"
           >
-            <div className={`flex items-center justify-between px-6 py-4 border-b ${brd} bg-gradient-to-r from-transparent via-purple-500/5 to-transparent`}>
-              <h2 className={`text-lg font-semibold ${tc} flex items-center gap-2`}>
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
-                  <Building2 size={16} className="text-white" />
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-purple-50 flex items-center justify-center">
+                  <Building2 size={14} className="text-purple-600" />
                 </div>
                 Services
               </h2>
-              <Link to="/service" className="text-sm font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors flex items-center gap-1">
-                Voir tout <ArrowRight size={14} />
+              <Link to="/service" className="text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                Voir tout <ArrowRight size={12} />
               </Link>
             </div>
-            <div className="p-4 max-h-[420px] overflow-y-auto custom-scrollbar">
+            <div className="p-4">
               {servicesList.length === 0 ? (
-                <div className="flex flex-col items-center py-10 text-center">
-                  <div className="w-16 h-16 rounded-2xl bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center mb-3">
-                    <Building2 size={28} className="text-purple-400" />
+                <div className="flex flex-col items-center py-8 text-center">
+                  <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center mb-3">
+                    <Building2 size={20} className="text-purple-400" />
                   </div>
-                  <p className={`text-sm font-medium ${tc}`}>Aucun service</p>
-                  <p className={`text-xs ${mc} mt-1`}>Les services apparaîtront ici une fois ajoutés</p>
+                  <p className="text-sm font-medium text-gray-900">Aucun service</p>
+                  <p className="text-xs text-gray-400 mt-1">Les services apparaîtront ici</p>
                 </div>
               ) : (
-                servicesList.slice(0, 8).map((s, idx) => (
-                  <motion.div
-                    key={s.id_lieu}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className={`flex items-center justify-between p-3 rounded-xl ${hoverCard} transition-all ${brd} border-b last:border-0 group/item`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-400 to-violet-500 flex items-center justify-center shadow-md shadow-purple-500/20">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {servicesList.slice(0, 6).map((s) => (
+                    <div
+                      key={s.id_lieu}
+                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-all group"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-400 to-violet-500 flex items-center justify-center shadow-sm flex-shrink-0">
                         <Building2 size={16} className="text-white" />
                       </div>
-                      <div>
-                        <p className={`text-sm font-semibold ${tc}`}>{s.nom_lieu}</p>
-                        <p className={`text-xs ${mc} flex items-center gap-1 mt-0.5`}>
-                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-purple-500" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{s.nom_lieu}</p>
+                        <p className="text-xs text-gray-500">
                           Porte {s.porte || '-'} · Étage {s.etage || '-'}
                         </p>
                       </div>
+                      <Link
+                        to={`/visiteur?service=${s.id_lieu}`}
+                        className="p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-all opacity-0 group-hover:opacity-100"
+                      >
+                        <ArrowRight size={14} />
+                      </Link>
                     </div>
-                    <Link
-                      to={`/visiteur?service=${s.id_lieu}`}
-                      className="p-2.5 rounded-xl bg-purple-50 dark:bg-purple-500/15 text-purple-600 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-500/25 transition-all opacity-0 group-hover/item:opacity-100 lg:opacity-100"
-                      title="Ajouter visite"
-                    >
-                      <Eye size={16} />
-                    </Link>
-                  </motion.div>
-                ))
+                  ))}
+                </div>
               )}
             </div>
           </motion.div>
         </div>
 
-        {/* Dernières visites */}
+        {/* Recent visits table */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className={`${card} rounded-2xl border backdrop-blur-xl overflow-hidden`}
+          className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
         >
-          <div className={`flex items-center justify-between px-6 py-4 border-b ${brd} bg-gradient-to-r from-transparent via-blue-500/5 to-transparent`}>
-            <h2 className={`text-lg font-semibold ${tc} flex items-center gap-2`}>
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <Calendar size={16} className="text-white" />
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
+                <Clock size={14} className="text-blue-600" />
               </div>
               Dernières visites
             </h2>
-            <Link to="/visite" className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors flex items-center gap-1">
-              Voir tout <ArrowRight size={14} />
-            </Link>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  const headers = ['Visiteur', 'Date', 'Arrivée', 'Départ', 'Service'];
+                  const rows = recentVisites.map(v => [`${v.nom} ${v.prenom}`, fmtDate(v.date || v.date_p), fmtHeure(v.heure_arrivee), v.heure_depart ? fmtHeure(v.heure_depart) : 'En cours', v.nom_lieu || v.nom_agent || '-']);
+                  exportToPDF({ title: 'Dernières visites', headers, rows, fileName: 'dernieres_visites' });
+                }}
+                className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
+                title="Exporter PDF"
+              >
+                <FileText size={16} />
+              </button>
+              <button
+                onClick={() => {
+                  const headers = ['Visiteur', 'Date', 'Arrivée', 'Départ', 'Service'];
+                  const rows = recentVisites.map(v => [`${v.nom} ${v.prenom}`, fmtDate(v.date || v.date_p), fmtHeure(v.heure_arrivee), v.heure_depart ? fmtHeure(v.heure_depart) : 'En cours', v.nom_lieu || v.nom_agent || '-']);
+                  exportToCSV({ headers, rows, fileName: 'dernieres_visites' });
+                }}
+                className="p-2 rounded-lg text-gray-400 hover:text-emerald-500 hover:bg-emerald-50 transition-all"
+                title="Exporter CSV"
+              >
+                <Download size={16} />
+              </button>
+              <Link to="/visite" className="text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                Voir tout <ArrowRight size={12} />
+              </Link>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className={`border-b ${brd}`}>
+                <tr className="border-b border-gray-100 bg-gray-50/50">
                   {['Visiteur', 'Date', 'Arrivée', 'Départ', 'Service'].map((h) => (
-                    <th key={h} className={`px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider ${mc}`}>{h}</th>
+                    <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {recentVisites.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-14 text-center">
+                    <td colSpan={5} className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center">
-                        <Calendar size={32} className="text-slate-300 dark:text-slate-600 mb-2" />
-                        <p className={`text-sm ${mc}`}>Aucune visite récente</p>
+                        <Clock size={28} className="text-gray-300 mb-2" />
+                        <p className="text-sm text-gray-500">Aucune visite récente</p>
                       </div>
                     </td>
                   </tr>
                 ) : (
-                  <AnimatePresence>
-                    {recentVisites.map((v, idx) => (
-                      <motion.tr
-                        key={'v-' + (v.id_visitelieu || 'p' + v.id_visitepersonne)}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: idx * 0.03 }}
-                        className={`${brd} ${hoverCard} transition-colors border-b last:border-0`}
-                      >
-                        <td className="px-6 py-3.5">
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold shadow-sm">
-                              {(v.nom?.[0] || '?').toUpperCase()}
-                            </div>
-                            <span className={`font-medium ${tc}`}>{v.nom} {v.prenom}</span>
+                  recentVisites.map((v) => (
+                    <tr
+                      key={'v-' + (v.id_visitelieu || 'p' + v.id_visitepersonne)}
+                      className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors"
+                    >
+                      <td className="px-6 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold">
+                            {(v.nom?.[0] || '?').toUpperCase()}
                           </div>
-                        </td>
-                        <td className={`px-6 py-3.5 ${mc}`}>{fmtDate(v.date || v.date_p)}</td>
-                        <td className="px-6 py-3.5">
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300 text-xs font-medium border border-emerald-200 dark:border-emerald-500/20">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            {fmtHeure(v.heure_arrivee)}
+                          <span className="font-medium text-gray-900">{v.nom} {v.prenom}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-3 text-gray-500">{fmtDate(v.date || v.date_p)}</td>
+                      <td className="px-6 py-3">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-medium">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          {fmtHeure(v.heure_arrivee)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-3">
+                        {v.heure_depart ? (
+                          <span className="text-sm text-gray-500">{fmtHeure(v.heure_depart)}</span>
+                        ) : (
+                          <span className="inline-flex px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 text-xs font-medium">
+                            En cours
                           </span>
-                        </td>
-                        <td className="px-6 py-3.5">
-                          {v.heure_depart ? (
-                            <span className={`text-sm ${mc}`}>{fmtHeure(v.heure_depart)}</span>
-                          ) : (
-                            <span className="inline-flex px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300 text-xs font-medium border border-amber-200 dark:border-amber-500/20">
-                              En cours
-                            </span>
-                          )}
-                        </td>
-                        <td className={`px-6 py-3.5 ${tc}`}>
-                          <div className="flex items-center gap-1.5">
-                            <Building2 size={14} className="text-blue-500" />
-                            {v.nom_lieu || v.nom_agent || v.personne_visite || '-'}
-                          </div>
-                        </td>
-                      </motion.tr>
-                    ))}
-                  </AnimatePresence>
+                        )}
+                      </td>
+                      <td className="px-6 py-3">
+                        <div className="flex items-center gap-1.5 text-gray-700">
+                          <Building2 size={14} className="text-blue-500" />
+                          {v.nom_lieu || v.nom_agent || v.personne_visite || '-'}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>
@@ -384,7 +392,6 @@ function HomeContent() {
         </motion.div>
       </div>
 
-      {/* Modal Ajout Visiteur */}
       <AjoutVisiteur open={ajoutVisiteurOpen} onClose={() => setAjoutVisiteurOpen(false)} onSuccess={fetchData} />
     </div>
   );

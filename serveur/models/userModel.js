@@ -20,10 +20,12 @@ export async function  SelectAllUsers() {
     return result.rows;
 }
 
-export async function  DeleteUsers() {
-    const result= await pool.query("SELECT id, nom_accueil, prenom_accueil, role, tel FROM users ORDER BY id ASC;"
+export async function DeleteUsers(id) {
+    const result = await pool.query(
+        "DELETE FROM users WHERE id = $1 RETURNING id, nom_accueil, prenom_accueil, role, tel;",
+        [id]
     );
-    return result.rows;
+    return result.rows[0];
 }
 
 export async function UpdateUsers(nom, prenom, role, tel, password, id) {

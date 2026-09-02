@@ -18,16 +18,23 @@ import { ChartMoisControlleur } from '../controllers/ajoutVisiteurController.js'
 import { ChartSemainesControlleur } from '../controllers/ajoutVisiteurController.js';
 import { SuperChartJourControlleur } from '../controllers/ajoutVisiteurController.js';
 import { getStatsController } from '../controllers/ajoutVisiteurController.js';
+import { auditLog } from '../middleware/auditLog.js';
 
 
 const router = express.Router();
 
-router.post('/ajoutVisite', createVisiteController);
-router.put('/updateVisiteur/:id', updateVisiteurControlleur);
-router.put('/visiteTerminer/:id', visiteterminerControlleur);
-router.post('/visitePersonne', ajoutVisitePersonne);
-router.put('/visitePersonneTerminer/:id', visitePersonneTerminerController);
-router.put('/updateVisiteLieu', updateVisiteLieuControlleur);
+// ─── Écriture (avec audit) ───────────────────────────────
+router.post('/ajoutVisite', auditLog('CREATE', 'visite'), createVisiteController);
+router.put('/updateVisiteur/:id', auditLog('UPDATE', 'visiteur'), updateVisiteurControlleur);
+router.put('/visiteTerminer/:id', auditLog('UPDATE', 'visite'), visiteterminerControlleur);
+router.post('/visitePersonne', auditLog('CREATE', 'visite'), ajoutVisitePersonne);
+router.put('/visitePersonneTerminer/:id', auditLog('UPDATE', 'visite'), visitePersonneTerminerController);
+router.put('/updateVisiteLieu', auditLog('UPDATE', 'visite'), updateVisiteLieuControlleur);
+router.put('/accueil/UpdateVisiteLieu/:id', auditLog('UPDATE', 'visite'), updateVisitelieuAccueil);
+router.put('/accueil/UpdateVisitePersonne/:id', auditLog('UPDATE', 'visite'), UpdateVisitePersonneAccueil);
+router.put('/terminerVisite/:id', auditLog('UPDATE', 'visite'), visiteterminerControlleur);
+
+// ─── Lecture (pas d'audit) ───────────────────────────────
 router.get('/listeVisiteur', getAllVisiteursController);
 router.get('/listeVisite', getAllVisiteLieuController);
 router.get('/listeVisitePersonne', getAllVisitePersonneController);
@@ -36,24 +43,15 @@ router.get('/listeVisiteNotPersonne', AllVisitePersonneControlleur);
 router.get('/nombreVisiteEncours', CountVisiteEncoursControlleur);
 router.get('/nombreVisiteurs', CountVisiteursNowControlleur);
 router.get('/visiteParId/:id', VisitesForId);
-router.put('/accueil/UpdateVisiteLieu/:id',updateVisitelieuAccueil );
-router.put('/accueil/UpdateVisitePersonne/:id',UpdateVisitePersonneAccueil );
 router.get('/chartMois', ChartMoisControlleur);
 router.get('/chartSemaine', ChartSemainesControlleur);
 router.get('/superChartJour', SuperChartJourControlleur);
 router.get('/superChartSemaine', SuperChartSemaineControlleur);
 router.get('/superChartMois', SuperChartMoisControlleur);
-
-// Routes dashboard accueil
 router.get('/stats', getStatsController);
-router.put('/terminerVisite/:id', visiteterminerControlleur);
-
-// Routes super admin dashboard
 router.get('/aujourdhui', SuperChartJourControlleur);
 router.get('/semaine', SuperChartSemaineControlleur);
 router.get('/mois', SuperChartMoisControlleur);
 router.get('/custom', SuperChartJourControlleur);
-router.get('/chartSemaine', ChartSemainesControlleur);
-router.get('/chartMois', ChartMoisControlleur);
 
 export default router;
