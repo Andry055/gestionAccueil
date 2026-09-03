@@ -12,6 +12,7 @@ import SuperAdminDashboardPage from '@/pages/SuperAdminDashboardPage';
 import GestionComptesPage from '@/pages/GestionComptesPage';
 import SuperAdminServicePage from '@/pages/SuperAdminServicePage';
 import StatistiquesPage from '@/pages/StatistiquesPage';
+import SaaSAnalyticsPage from '@/pages/SaaSAnalyticsPage';
 
 export default function App() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="/superAdmin/utilisateurs" element={<GestionComptesPage />} />
         <Route path="/superAdmin/service" element={<SuperAdminServicePage />} />
         <Route path="/superAdmin/statistiques" element={<StatistiquesPage />} />
+        <Route path="/analytics" element={<SaaSAnalyticsPage />} />
       </Routes>
     </ClientLayout>
   );

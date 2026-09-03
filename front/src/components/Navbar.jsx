@@ -31,16 +31,16 @@ export default function Navbar() {
       className={`sticky top-0 z-50 shadow-md transition-colors duration-200 ${
         darkMode
           ? 'bg-gray-800 text-white border-b border-gray-700'
-          : 'bg-white text-gray-800 border-b border-gray-200'
+          : 'bg-white text-gray-800 border-b border-[var(--border-light)]'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-blue-500/20">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-lg" style={{ background: 'var(--gradient-blue)' }}>
               VT
             </div>
-            <span className="font-bold text-lg hidden sm:block bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+            <span className="font-bold text-lg hidden sm:block" style={{ color: 'var(--primary-500)' }}>
               VisiTrack
             </span>
           </div>
@@ -50,11 +50,12 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 to={link.href}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
                   isActive(link.href)
-                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                    ? 'text-white shadow-md'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card-secondary)]'
                 }`}
+                style={isActive(link.href) ? { background: 'var(--gradient-blue)' } : {}}
               >
                 {link.label}
               </Link>
@@ -64,10 +65,8 @@ export default function Navbar() {
           <div className="flex items-center gap-3">
             <button
               onClick={toggleDarkMode}
-              className={`p-2 rounded-lg transition-colors ${
-                darkMode
-                  ? 'hover:bg-gray-700 text-yellow-400'
-                  : 'hover:bg-gray-100 text-gray-600'
+              className={`p-2 rounded-xl transition-colors ${
+                darkMode ? 'hover:bg-gray-700 text-yellow-400' : 'hover:bg-[var(--bg-card-secondary)] text-[var(--text-muted)]'
               }`}
               aria-label="Toggle dark mode"
             >
@@ -76,13 +75,13 @@ export default function Navbar() {
 
             {user && (
               <div className="hidden md:flex items-center gap-2">
-                <span className="text-sm text-gray-500 dark:text-gray-400">
+                <span className="text-sm text-[var(--text-muted)]">
                   <User size={16} className="inline mr-1" />
                   {user.username}
                 </span>
                 <button
                   onClick={handleLogout}
-                  className="p-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                  className="p-2 rounded-xl text-red-500 hover:bg-red-50 transition-colors"
                   title="Déconnexion"
                 >
                   <LogOut size={18} />
@@ -92,8 +91,8 @@ export default function Navbar() {
 
             <button
               onClick={() => setOpen(!open)}
-              className={`md:hidden p-2 rounded-lg transition-colors ${
-                darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+              className={`md:hidden p-2 rounded-xl transition-colors ${
+                darkMode ? 'hover:bg-gray-700' : 'hover:bg-[var(--bg-card-secondary)]'
               }`}
               aria-label="Menu"
             >
@@ -108,35 +107,27 @@ export default function Navbar() {
           open ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
-        <div
-          className={`px-4 py-3 space-y-1 ${
-            darkMode ? 'bg-gray-800' : 'bg-white'
-          } border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}
-        >
+        <div className={`px-4 py-3 space-y-1 ${darkMode ? 'bg-gray-800' : 'bg-white'} border-t ${darkMode ? 'border-gray-700' : 'border-[var(--border-light)]'}`}>
           {links.map((link) => (
             <Link
               key={link.href}
               to={link.href}
               onClick={() => setOpen(false)}
-              className={`block px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`block px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
                 isActive(link.href)
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                  ? 'text-white'
+                  : 'text-[var(--text-secondary)] hover:bg-[var(--bg-card-secondary)]'
               }`}
+              style={isActive(link.href) ? { background: 'var(--gradient-blue)' } : {}}
             >
               {link.label}
             </Link>
           ))}
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
+          <div className={`border-t ${darkMode ? 'border-gray-700' : 'border-[var(--border-light)]'} pt-2 mt-2`}>
             {user && (
               <div className="flex items-center justify-between px-4 py-2">
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  {user.username}
-                </span>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 text-sm text-red-500 hover:text-red-600"
-                >
+                <span className="text-sm text-[var(--text-muted)]">{user.username}</span>
+                <button onClick={handleLogout} className="flex items-center gap-2 text-sm text-red-500 hover:text-red-600">
                   <LogOut size={16} /> Déconnexion
                 </button>
               </div>

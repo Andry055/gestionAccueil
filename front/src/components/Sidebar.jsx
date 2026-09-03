@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard, MessageSquare, Users, Building2, BarChart3,
-  Info, ChevronLeft, ChevronRight, Shield, UserPlus,
+  Info, ChevronLeft, ChevronRight, UserPlus,
 } from 'lucide-react';
 
 const adminLinks = [
@@ -37,17 +37,15 @@ export default function Sidebar({ collapsed, onToggle }) {
       className={`fixed top-0 left-0 h-full z-40 transition-all duration-300 ease-in-out flex flex-col ${
         collapsed ? 'w-[72px]' : 'w-[260px]'
       }`}
-      style={{ background: 'linear-gradient(180deg, #0f1a3e 0%, #162052 50%, #1a2560 100%)' }}
+      style={{ background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #1e40af 100%)' }}
     >
       {/* Logo area */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-white/10">
-        <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
-          <Shield className="w-5 h-5 text-white" />
-        </div>
+        <img src="/logo.png" alt="Logo" className="h-10 w-auto object-contain flex-shrink-0" />
         {!collapsed && (
           <div className="overflow-hidden">
-            <h1 className="text-white font-bold text-sm leading-tight">Gestion des Avis</h1>
-            <p className="text-white/50 text-[10px] uppercase tracking-wider">Plateforme de concertation</p>
+            <h1 className="text-white font-bold text-sm leading-tight">VisiTrack</h1>
+            <p className="text-white/50 text-[10px] uppercase tracking-wider">Gestion des Visiteurs</p>
           </div>
         )}
       </div>

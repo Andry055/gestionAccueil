@@ -1,39 +1,38 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 import { useSocket } from '@/contexts/SocketContext';
 import AuthGuard from '@/components/AuthGuard';
 import AjoutVisiteur from '@/components/AjoutVisiteur';
 import { exportToPDF, exportToCSV } from '@/utils/exportPDF';
 import api from '@/lib/api';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
-  Users, Building2, Clock, RefreshCw, Check, Loader2,
-  TrendingUp, ArrowRight, Activity, UserPlus, Wifi, WifiOff,
-  FileText, Download,
+  Users, Building2, Clock, Check, ArrowRight, Activity,
+  FileText, Download, SquareCheckBig,
+  ChevronLeft, ChevronRight, UserPlus, Search,
 } from 'lucide-react';
 
 function HomeContent() {
-  const { user } = useAuth();
-  const { connected, on, off } = useSocket();
+  const { on, off } = useSocket();
   const [visitesLieu, setVisitesLieu] = useState([]);
   const [visitesPersonne, setVisitesPersonne] = useState([]);
-  const [servicesList, setServicesList] = useState([]);
   const [stats, setStats] = useState({ totalVisiteurs: 0, totalServices: 0, visitesEnCours: 0 });
   const [loading, setLoading] = useState(true);
   const [ajoutVisiteurOpen, setAjoutVisiteurOpen] = useState(false);
+  const [pageEncours, setPageEncours] = useState(0);
+  const [pageRecentes, setPageRecentes] = useState(0);
+  const [searchEncours, setSearchEncours] = useState('');
+  const PER_PAGE = 5;
 
   const fetchData = useCallback(async () => {
     try {
-      const [lieuRes, personneRes, servicesRes, statsRes] = await Promise.all([
+      const [lieuRes, personneRes, statsRes] = await Promise.all([
         api.get('/visite/listeVisite'),
         api.get('/visite/listeVisitePersonne'),
-        api.get('/service/listeService'),
         api.get('/visite/stats'),
       ]);
       setVisitesLieu(Array.isArray(lieuRes.data?.data) ? lieuRes.data.data : []);
       setVisitesPersonne(Array.isArray(personneRes.data?.data) ? personneRes.data.data : []);
-      setServicesList(Array.isArray(servicesRes.data?.data) ? servicesRes.data.data : []);
       if (statsRes.data) setStats(statsRes.data);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
@@ -46,16 +45,10 @@ function HomeContent() {
     on('visite:created', handleRefresh);
     on('visite:terminated', handleRefresh);
     on('visiteur:updated', handleRefresh);
-    on('service:created', handleRefresh);
-    on('service:updated', handleRefresh);
-    on('service:deleted', handleRefresh);
     return () => {
       off('visite:created', handleRefresh);
       off('visite:terminated', handleRefresh);
       off('visiteur:updated', handleRefresh);
-      off('service:created', handleRefresh);
-      off('service:updated', handleRefresh);
-      off('service:deleted', handleRefresh);
     };
   }, [on, off, fetchData]);
 
@@ -72,316 +65,319 @@ function HomeContent() {
   const fmtHeure = (d) => { if (!d) return '-'; return new Date(d).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }); };
   const fmtDate = (d) => { if (!d) return '-'; return new Date(d).toLocaleDateString('fr-FR'); };
 
-  const recentVisites = [...visitesLieu, ...visitesPersonne]
-    .sort((a, b) => new Date(b.date || b.date_p) - new Date(a.date || a.date_p))
-    .slice(0, 10);
+  const getPageRange = (current, total) => {
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i);
+    const pages = [];
+    pages.push(0);
+    if (current > 3) pages.push('dots-l');
+    const start = Math.max(1, current - 1);
+    const end = Math.min(total - 2, current + 1);
+    for (let i = start; i <= end; i++) pages.push(i);
+    if (current < total - 4) pages.push('dots-r');
+    pages.push(total - 1);
+    return pages;
+  };
+
+  const allVisites = [...visitesLieu, ...visitesPersonne];
+  const allVisitesEnCours = allVisites.filter(v => !v.heure_depart);
+  const filteredEncours = searchEncours.trim()
+    ? allVisitesEnCours.filter(v => {
+        const q = searchEncours.toLowerCase();
+        const name = `${v.nom || ''} ${v.prenom || ''}`.toLowerCase();
+        const lieu = (v.nom_lieu || v.nom_agent || v.personne_visite || '').toLowerCase();
+        return name.includes(q) || lieu.includes(q);
+      })
+    : allVisitesEnCours;
+  const allRecentes = allVisites
+    .sort((a, b) => new Date(b.date || b.date_p) - new Date(a.date || a.date_p));
+
+  const pagesEncours = Math.max(1, Math.ceil(filteredEncours.length / PER_PAGE));
+  const pagesRecentes = Math.max(1, Math.ceil(allRecentes.length / PER_PAGE));
+  const visitesEnCours = filteredEncours.slice(pageEncours * PER_PAGE, pageEncours * PER_PAGE + PER_PAGE);
+  const recentVisites = allRecentes.slice(pageRecentes * PER_PAGE, pageRecentes * PER_PAGE + PER_PAGE);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-[var(--bg-page)]">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center animate-pulse shadow-lg">
-            <Activity className="w-7 h-7 text-white" />
+          <div className="flex h-16 w-16 items-center justify-center rounded-[22px] text-white shadow-[var(--shadow-blue)]" style={{ background: 'var(--gradient-blue)' }}>
+            <Activity className="h-7 w-7" />
           </div>
-          <p className="text-sm text-gray-500">Chargement du tableau de bord...</p>
+          <p className="text-sm text-[var(--text-secondary)]">Chargement du tableau de bord...</p>
         </div>
       </div>
     );
   }
 
-  const statCards = [
+  /* ── Compact mini-KPI data ── */
+  const miniKpis = [
     {
-      label: 'Visiteurs aujourd\'hui',
+      label: 'Visiteurs',
       value: stats.totalVisiteurs ?? 0,
       icon: Users,
-      color: 'blue',
-      bgClass: 'bg-blue-50',
-      iconClass: 'text-blue-600',
-      subtext: 'Toutes directions',
+      bg: 'bg-[var(--bg-card-secondary)]',
+      iconBg: 'bg-blue-100',
+      iconColor: 'text-blue-600',
+      valueColor: 'text-[var(--text-primary)]',
+      labelColor: 'text-[var(--text-muted)]',
     },
     {
-      label: 'Services actifs',
+      label: 'Services',
       value: stats.totalServices ?? 0,
       icon: Building2,
-      color: 'purple',
-      bgClass: 'bg-purple-50',
-      iconClass: 'text-purple-600',
-      subtext: 'Enregistrés',
+      bg: 'bg-[var(--bg-card-secondary)]',
+      iconBg: 'bg-violet-100',
+      iconColor: 'text-violet-600',
+      valueColor: 'text-[var(--text-primary)]',
+      labelColor: 'text-[var(--text-muted)]',
     },
     {
-      label: 'Visites en cours',
-      value: stats.visitesEnCours ?? 0,
+      label: 'En cours',
+      value: visitesEnCours.length,
       icon: Clock,
-      color: 'green',
-      bgClass: 'bg-emerald-50',
-      iconClass: 'text-emerald-600',
-      subtext: 'En attente',
+      bg: 'bg-[var(--bg-card-secondary)]',
+      iconBg: 'bg-emerald-100',
+      iconColor: 'text-emerald-600',
+      valueColor: 'text-[var(--text-primary)]',
+      labelColor: 'text-[var(--text-muted)]',
     },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Stat cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-          {/* Nouvelle visite card - matches reference image exactly */}
-          <div
-            className="rounded-3xl p-6 text-white relative overflow-hidden shadow-lg cursor-pointer flex flex-col items-center text-center min-h-[220px]"
-            style={{
-              background: 'linear-gradient(180deg, #1a237e 0%, #283593 60%, #3949ab 100%)',
-            }}
+    <div className="min-h-screen bg-[var(--bg-page)]">
+      <div className="page-container" style={{ paddingTop: '4px', paddingBottom: '16px' }}>
+
+        {/* ═══ Bandeau stats + bouton ════════════════ */}
+        <section className="mb-3 grid grid-cols-[1fr_1fr_1fr_auto] gap-3 items-center">
+          {miniKpis.map((kpi, i) => {
+            const Icon = kpi.icon;
+            return (
+              <motion.div
+                key={kpi.label}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: i * 0.06 }}
+                className={`${kpi.bg} rounded-xl px-4 py-3 flex items-center gap-3 border border-[var(--border-light)] shadow-sm`}
+              >
+                <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${kpi.iconBg}`}>
+                  <Icon className={`h-5 w-5 ${kpi.iconColor}`} />
+                </div>
+                <div className="min-w-0">
+                  <p className={`text-lg font-extrabold leading-tight ${kpi.valueColor}`} style={{ letterSpacing: '-0.03em' }}>
+                    {kpi.value}
+                  </p>
+                  <p className={`text-[11px] font-medium leading-tight ${kpi.labelColor}`}>
+                    {kpi.label}
+                  </p>
+                </div>
+              </motion.div>
+            );
+          })}
+
+          {/* ── Bouton Nouvelle visite ── */}
+          <motion.button
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
             onClick={() => setAjoutVisiteurOpen(true)}
+            className="h-full flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white shadow-md hover:shadow-lg transition-all active:scale-95"
+            style={{ background: 'linear-gradient(135deg, #2563eb 0%, #6366f1 100%)' }}
           >
-            <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center mb-4">
-              <FileText size={24} className="text-white" />
-            </div>
-            <p className="text-sm font-semibold leading-snug mb-4">Cliquer ici pour<br />enregistrer une<br />nouvelle visite</p>
-            <div className="mt-auto">
-              <span className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-white/20 hover:bg-white/30 text-white text-xs font-semibold transition-colors backdrop-blur-sm">
-                Commencer <ArrowRight size={14} />
-              </span>
-            </div>
-          </div>
+            <UserPlus className="h-4.5 w-4.5" />
+            Nouvelle visite
+          </motion.button>
+        </section>
 
-          {/* Stat cards */}
-          {statCards.map((s, i) => (
-            <div
-              key={s.label}
-              className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{s.label}</p>
-                </div>
-                <div className={`w-11 h-11 rounded-xl ${s.bgClass} flex items-center justify-center`}>
-                  <s.icon className={`w-5 h-5 ${s.iconClass}`} />
-                </div>
-              </div>
-              <p className="text-3xl font-bold text-gray-900">{s.value}</p>
-              <p className="text-xs text-gray-400 mt-1">{s.subtext}</p>
-            </div>
-          ))}
-        </div>
+        {/* ═══ Visites en cours + Récentes côte à côte ═══ */}
+        <div className="grid grid-cols-1 lg:grid-cols-[0.7fr_1.3fr] gap-5 mb-6">
 
-        {/* Content grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Active visits */}
+        {/* ═══ Visites en cours ═════════════════════ */}
+        <section>
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden lg:col-span-1"
+            transition={{ duration: 0.3 }}
+            className="surface"
           >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center">
-                  <Clock size={14} className="text-emerald-600" />
+            <div className="surface-header" style={{ padding: '14px 20px' }}>
+              <h2 style={{ fontSize: '0.95rem', fontWeight: 700 }}>
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50">
+                  <SquareCheckBig className="h-3.5 w-3.5 text-emerald-600" />
                 </div>
                 Visites en cours
               </h2>
-              <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">
-                {stats.visitesEnCours} active{stats.visitesEnCours !== 1 ? 's' : ''}
-              </span>
+              <div className="flex items-center gap-2">
+                {filteredEncours.length > 0 && (
+                  <span className="badge badge--green">
+                    {filteredEncours.length}
+                  </span>
+                )}
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--text-muted)]" />
+                  <input
+                    type="text"
+                    placeholder="Rechercher…"
+                    value={searchEncours}
+                    onChange={(e) => { setSearchEncours(e.target.value); setPageEncours(0); }}
+                    className="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-[var(--border-light)] bg-[var(--bg-card-secondary)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-emerald-400 w-[140px]"
+                  />
+                </div>
+              </div>
             </div>
-            <div className="p-4 max-h-[360px] overflow-y-auto">
-              {recentVisites.filter(v => !v.heure_depart).length === 0 ? (
-                <div className="flex flex-col items-center py-8 text-center">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center mb-3">
-                    <Check size={20} className="text-emerald-400" />
-                  </div>
-                  <p className="text-sm font-medium text-gray-900">Tout est à jour</p>
-                  <p className="text-xs text-gray-400 mt-1">Aucune visite en cours</p>
+
+            <div style={{ maxHeight: '360px' }} className="overflow-y-auto">
+              {visitesEnCours.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-[var(--border-light)] bg-[var(--bg-card-secondary)] py-10 text-center mx-3 mb-3">
+                  <Check className="mx-auto mb-2 h-8 w-8 text-emerald-300" />
+                  <p className="text-sm font-medium text-[var(--text-muted)]">Tout est à jour</p>
+                  <p className="text-xs text-[var(--border-light)] mt-0.5">Aucune visite en cours</p>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {recentVisites.filter(v => !v.heure_depart).map((v) => (
+                <div className="p-2.5 space-y-1">
+                  {visitesEnCours.map((v) => (
                     <div
-                      key={'act-' + (v.id_visitelieu || 'p' + v.id_visitepersonne)}
-                      className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-all group"
+                      key={'enc-' + (v.id_visitelieu || 'p' + v.id_visitepersonne)}
+                      className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 hover:bg-[var(--bg-card-secondary)] transition-all group"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="relative">
-                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center shadow-sm">
-                            <Users size={14} className="text-white" />
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="relative flex-shrink-0">
+                          <div
+                            className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold"
+                            style={{ background: 'linear-gradient(135deg, #10b981, #14b8a6)' }}
+                          >
+                            {(v.nom?.[0] || '?').toUpperCase()}
                           </div>
-                          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full animate-pulse" />
+                          <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500 animate-pulse" />
                         </div>
-                        <div>
-                          <p className="text-sm font-semibold text-gray-900">{v.nom} {v.prenom}</p>
-                          <p className="text-xs text-gray-500">
-                            {v.nom_lieu || v.nom_agent || '-'} · {fmtHeure(v.heure_arrivee)}
+                        <div className="min-w-0">
+                          <p className="truncate text-[13px] font-semibold text-[var(--text-primary)]">
+                            {v.nom} {v.prenom}
+                          </p>
+                          <p className="truncate text-[11px] text-[var(--text-muted)]">
+                            {v.nom_lieu || v.nom_agent || v.personne_visite || '—'} · {fmtHeure(v.heure_arrivee)}
                           </p>
                         </div>
                       </div>
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
+                      <button
                         onClick={() => terminerVisite(v.id_visitelieu || v.id_visitepersonne, v.id_visitepersonne ? 'personne' : 'lieu')}
-                        className="p-2 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all opacity-0 group-hover:opacity-100"
-                        title="Terminer"
+                        className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-[13px] font-semibold text-white transition-all hover:bg-emerald-700 active:scale-95 shadow-sm"
                       >
-                        <Check size={14} />
-                      </motion.button>
+                        <SquareCheckBig className="h-3.5 w-3.5" />
+                        Terminé
+                      </button>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-          </motion.div>
 
-          {/* Services */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden lg:col-span-2"
-          >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-purple-50 flex items-center justify-center">
-                  <Building2 size={14} className="text-purple-600" />
-                </div>
-                Services
-              </h2>
-              <Link to="/service" className="text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1">
-                Voir tout <ArrowRight size={12} />
-              </Link>
-            </div>
-            <div className="p-4">
-              {servicesList.length === 0 ? (
-                <div className="flex flex-col items-center py-8 text-center">
-                  <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center mb-3">
-                    <Building2 size={20} className="text-purple-400" />
-                  </div>
-                  <p className="text-sm font-medium text-gray-900">Aucun service</p>
-                  <p className="text-xs text-gray-400 mt-1">Les services apparaîtront ici</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {servicesList.slice(0, 6).map((s) => (
-                    <div
-                      key={s.id_lieu}
-                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-all group"
+            {/* Pagination — Visites en cours */}
+            {pagesEncours > 1 && (
+              <div className="flex items-center justify-center gap-1 px-4 py-2.5 border-t border-[var(--border-light)]">
+                <button
+                  onClick={() => setPageEncours(p => Math.max(0, p - 1))}
+                  disabled={pageEncours === 0}
+                  className="p-1 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-card-secondary)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                {getPageRange(pageEncours, pagesEncours).map((p, idx) =>
+                  p === 'dots-l' || p === 'dots-r' ? (
+                    <span key={p} className="px-1 text-xs text-[var(--text-muted)]">…</span>
+                  ) : (
+                    <button
+                      key={p}
+                      onClick={() => setPageEncours(p)}
+                      className={`min-w-[28px] h-7 rounded-lg text-xs font-semibold transition-colors ${
+                        pageEncours === p
+                          ? 'bg-emerald-600 text-white shadow-sm'
+                          : 'text-[var(--text-muted)] hover:bg-[var(--bg-card-secondary)]'
+                      }`}
                     >
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-400 to-violet-500 flex items-center justify-center shadow-sm flex-shrink-0">
-                        <Building2 size={16} className="text-white" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 truncate">{s.nom_lieu}</p>
-                        <p className="text-xs text-gray-500">
-                          Porte {s.porte || '-'} · Étage {s.etage || '-'}
-                        </p>
-                      </div>
-                      <Link
-                        to={`/visiteur?service=${s.id_lieu}`}
-                        className="p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-all opacity-0 group-hover:opacity-100"
-                      >
-                        <ArrowRight size={14} />
-                      </Link>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Recent visits table */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
-        >
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-            <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
-                <Clock size={14} className="text-blue-600" />
+                      {p + 1}
+                    </button>
+                  )
+                )}
+                <button
+                  onClick={() => setPageEncours(p => Math.min(pagesEncours - 1, p + 1))}
+                  disabled={pageEncours === pagesEncours - 1}
+                  className="p-1 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-card-secondary)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
               </div>
-              Dernières visites
+            )}
+          </motion.div>
+        </section>
+
+        {/* ═══ Visites récentes ═════════════════════ */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="surface"
+        >
+          <div className="surface-header">
+            <h2>
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[var(--primary-50)]">
+                <Clock className="h-4 w-4 text-[var(--primary-500)]" />
+              </div>
+              Visites récentes
             </h2>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => {
-                  const headers = ['Visiteur', 'Date', 'Arrivée', 'Départ', 'Service'];
-                  const rows = recentVisites.map(v => [`${v.nom} ${v.prenom}`, fmtDate(v.date || v.date_p), fmtHeure(v.heure_arrivee), v.heure_depart ? fmtHeure(v.heure_depart) : 'En cours', v.nom_lieu || v.nom_agent || '-']);
-                  exportToPDF({ title: 'Dernières visites', headers, rows, fileName: 'dernieres_visites' });
-                }}
-                className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
-                title="Exporter PDF"
-              >
-                <FileText size={16} />
-              </button>
-              <button
-                onClick={() => {
-                  const headers = ['Visiteur', 'Date', 'Arrivée', 'Départ', 'Service'];
-                  const rows = recentVisites.map(v => [`${v.nom} ${v.prenom}`, fmtDate(v.date || v.date_p), fmtHeure(v.heure_arrivee), v.heure_depart ? fmtHeure(v.heure_depart) : 'En cours', v.nom_lieu || v.nom_agent || '-']);
-                  exportToCSV({ headers, rows, fileName: 'dernieres_visites' });
-                }}
-                className="p-2 rounded-lg text-gray-400 hover:text-emerald-500 hover:bg-emerald-50 transition-all"
-                title="Exporter CSV"
-              >
-                <Download size={16} />
-              </button>
-              <Link to="/visite" className="text-xs font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1">
-                Voir tout <ArrowRight size={12} />
-              </Link>
-            </div>
+            <Link to="/visite" className="btn-secondary" style={{ padding: '6px 14px', fontSize: '0.75rem' }}>
+              Voir tout <ArrowRight className="h-3 w-3" />
+            </Link>
           </div>
+
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full data-table">
               <thead>
-                <tr className="border-b border-gray-100 bg-gray-50/50">
-                  {['Visiteur', 'Date', 'Arrivée', 'Départ', 'Service'].map((h) => (
-                    <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
-                  ))}
+                <tr>
+                  <th>Visiteur</th>
+                  <th>Date</th>
+                  <th>Arrivée</th>
+                  <th>Départ</th>
+                  <th>Service</th>
                 </tr>
               </thead>
               <tbody>
                 {recentVisites.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center">
-                      <div className="flex flex-col items-center">
-                        <Clock size={28} className="text-gray-300 mb-2" />
-                        <p className="text-sm text-gray-500">Aucune visite récente</p>
-                      </div>
-                    </td>
-                  </tr>
+                  <tr><td colSpan={5} className="text-center py-16">
+                    <div className="flex flex-col items-center gap-2">
+                      <Clock className="h-10 w-10 text-[var(--border-light)]" />
+                      <p className="text-sm text-[var(--text-muted)]">Aucune visite récente</p>
+                    </div>
+                  </td></tr>
                 ) : (
                   recentVisites.map((v) => (
-                    <tr
-                      key={'v-' + (v.id_visitelieu || 'p' + v.id_visitepersonne)}
-                      className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors"
-                    >
-                      <td className="px-6 py-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold">
+                    <tr key={'v-' + (v.id_visitelieu || 'p' + v.id_visitepersonne)}>
+                      <td>
+                        <div className="flex items-center gap-2.5">
+                          <div className="avatar avatar--sm" style={{ background: 'linear-gradient(135deg, #2563eb, #6366f1)' }}>
                             {(v.nom?.[0] || '?').toUpperCase()}
                           </div>
-                          <span className="font-medium text-gray-900">{v.nom} {v.prenom}</span>
+                          <span className="font-medium text-[var(--text-primary)]">{v.nom} {v.prenom}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-3 text-gray-500">{fmtDate(v.date || v.date_p)}</td>
-                      <td className="px-6 py-3">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-medium">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <td className="text-[var(--text-secondary)]">{fmtDate(v.date || v.date_p)}</td>
+                      <td>
+                        <span className="badge badge--green">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                           {fmtHeure(v.heure_arrivee)}
                         </span>
                       </td>
-                      <td className="px-6 py-3">
+                      <td>
                         {v.heure_depart ? (
-                          <span className="text-sm text-gray-500">{fmtHeure(v.heure_depart)}</span>
+                          <span className="text-[var(--text-secondary)]">{fmtHeure(v.heure_depart)}</span>
                         ) : (
-                          <span className="inline-flex px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 text-xs font-medium">
-                            En cours
-                          </span>
+                          <span className="badge badge--amber">En cours</span>
                         )}
                       </td>
-                      <td className="px-6 py-3">
-                        <div className="flex items-center gap-1.5 text-gray-700">
-                          <Building2 size={14} className="text-blue-500" />
+                      <td>
+                        <span className="flex items-center gap-1.5 text-[var(--text-secondary)]">
+                          <Building2 className="h-3.5 w-3.5 text-[var(--text-muted)]" />
                           {v.nom_lieu || v.nom_agent || v.personne_visite || '-'}
-                        </div>
+                        </span>
                       </td>
                     </tr>
                   ))
@@ -389,7 +385,70 @@ function HomeContent() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination — Visites récentes */}
+          {pagesRecentes > 1 && (
+            <div className="flex items-center justify-center gap-1 px-4 py-2.5 border-t border-[var(--border-light)]">
+              <button
+                onClick={() => setPageRecentes(p => Math.max(0, p - 1))}
+                disabled={pageRecentes === 0}
+                className="p-1 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-card-secondary)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              {getPageRange(pageRecentes, pagesRecentes).map((p, idx) =>
+                p === 'dots-l' || p === 'dots-r' ? (
+                  <span key={p} className="px-1 text-xs text-[var(--text-muted)]">…</span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => setPageRecentes(p)}
+                    className={`min-w-[28px] h-7 rounded-lg text-xs font-semibold transition-colors ${
+                      pageRecentes === p
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'text-[var(--text-muted)] hover:bg-[var(--bg-card-secondary)]'
+                    }`}
+                  >
+                    {p + 1}
+                  </button>
+                )
+              )}
+              <button
+                onClick={() => setPageRecentes(p => Math.min(pagesRecentes - 1, p + 1))}
+                disabled={pageRecentes === pagesRecentes - 1}
+                className="p-1 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-card-secondary)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          )}
         </motion.div>
+
+        </div>
+
+        {/* ═══ Footer bar ═══════════════════════════ */}
+        <div className="flex items-center justify-between rounded-xl border border-[var(--border-light)] bg-white px-4 py-2.5 shadow-[var(--shadow-sm)]">
+          <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
+            <span className="pulse-dot" />
+            Système actif · temps réel
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => { const headers = ['Visiteur', 'Date', 'Arrivée', 'Départ', 'Service']; const rows = recentVisites.map((v) => [`${v.nom} ${v.prenom}`, fmtDate(v.date || v.date_p), fmtHeure(v.heure_arrivee), v.heure_depart ? fmtHeure(v.heure_depart) : 'En cours', v.nom_lieu || v.nom_agent || '-']); exportToPDF({ title: 'Dernières visites', headers, rows, fileName: 'dernieres_visites' }); }}
+              className="btn-secondary"
+              style={{ padding: '6px 12px', fontSize: '0.7rem' }}
+            >
+              <FileText className="h-3.5 w-3.5" /> Export PDF
+            </button>
+            <button
+              onClick={() => { const headers = ['Visiteur', 'Date', 'Arrivée', 'Départ', 'Service']; const rows = recentVisites.map((v) => [`${v.nom} ${v.prenom}`, fmtDate(v.date || v.date_p), fmtHeure(v.heure_arrivee), v.heure_depart ? fmtHeure(v.heure_depart) : 'En cours', v.nom_lieu || v.nom_agent || '-']); exportToCSV({ headers, rows, fileName: 'dernieres_visites' }); }}
+              className="btn-secondary"
+              style={{ padding: '6px 12px', fontSize: '0.7rem' }}
+            >
+              <Download className="h-3.5 w-3.5" /> Export CSV
+            </button>
+          </div>
+        </div>
       </div>
 
       <AjoutVisiteur open={ajoutVisiteurOpen} onClose={() => setAjoutVisiteurOpen(false)} onSuccess={fetchData} />

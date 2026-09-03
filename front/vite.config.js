@@ -10,5 +10,20 @@ export default defineConfig({
       '@': import.meta.dirname + '/src',
     },
   },
-
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
+      '/visite': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
+      '/service': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
+    },
+  },
 })
